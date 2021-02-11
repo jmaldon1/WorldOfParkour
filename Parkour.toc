@@ -1,0 +1,13 @@
+## Interface: 90002
+## Title: Parkour
+## Dependencies: TomTom
+## Notes: Shows a message of "Hello, World!" on screen.
+## Author: Josh
+## SavedVariables: ParkourWaypoints
+## Version: 0.0.1
+
+# Lib
+Lib\LibStub\LibStub.lua
+
+# Source
+Parkour.lua

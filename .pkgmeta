@@ -1,0 +1,4 @@
+package-as: Parkour
+
+externals:
+    Parkour/Lib/LibStub: https://repos.wowace.com/wow/libstub/trunk
