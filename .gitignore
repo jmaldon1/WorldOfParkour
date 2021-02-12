@@ -1,3 +1,6 @@
+# external libs
+/libs
+
 # Compiled Lua sources
 luac.out
 

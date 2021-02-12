@@ -1,29 +1,41 @@
--- luacheck: globals TomTom
+local activeParkourCourseWaypoints = {}
 
-local parkourCourseWaypoints = {}
+-- Add standard addon support.
+WorldOfParkour = LibStub("AceAddon-3.0"):NewAddon("WorldOfParkour")
 
-local addonName, addon = ...
-local Parkour = addon
+function WorldOfParkour:OnInitialize()
+    self.activeCourseDefaults = {profile = {activecourse = {}}}
 
-addon.CLASSIC = math.floor(select(4, GetBuildInfo() ) / 100) == 113
+    self.activeParkourCourseDB = LibStub("AceDB-3.0"):New(
+                                     "WoPActiveParkourCourseDB",
+                                     self.activeCourseDefaults)
 
-function Parkour:Initialize(event, addon)
+    self.activeParkourCourseDB.RegisterCallback(self, "OnProfileChanged",
+                                                "ReloadActiveCourse")
+    self.activeParkourCourseDB.RegisterCallback(self, "OnProfileCopied",
+                                                "ReloadActiveCourse")
+    self.activeParkourCourseDB.RegisterCallback(self, "OnProfileReset",
+                                                "ReloadActiveCourse")
+
+    -- Change some defaults on TomTom
+    TomTom.profile.minimap.default_iconsize = 10
+    TomTom.profile.worldmap.default_iconsize = 10
 end
 
-function Parkour:Enable(addon)
+function WorldOfParkour:OnEnable()
+    -- Reload last active parkour course on load.
+    self:ReloadActiveCourse()
     -- This is the place to reload the persisted waypoints
-    print("enable")
-    -- self:ReloadWaypoints()
 end
 
-local dropdown = CreateFrame("Frame", "TomTomDropdown", nil,
-                             "UIDropDownMenuTemplate")
-
--- local callbacks = TomTom:DefaultCallbacks()
+-- Wow error handler
+seterrorhandler(print);
 
 --[[-------------------------------------------------------------------
 --  Dropdown menu code
 -------------------------------------------------------------------]] --
+local dropdown = CreateFrame("Frame", "TomTomDropdown", nil,
+                             "UIDropDownMenuTemplate")
 
 local dropdown_info = {
     -- Define level one elements here
@@ -94,10 +106,6 @@ function Parkour_minimap_onclick(event, uid, self, button)
     print("CLICK")
     InitializeDropdown(uid)
     _G.ToggleDropDownMenu(1, nil, dropdown, "cursor", 0, 0)
-    print(event)
-    print(uid)
-    print(self)
-    print(button)
 end
 
 local Parkour_callbacks_tomtom = {minimap = {onclick = Parkour_minimap_onclick}}
@@ -105,15 +113,16 @@ local Parkour_callbacks_tomtom = {minimap = {onclick = Parkour_minimap_onclick}}
 function SetWaypointAtIndexOnCurrentPosition(idx)
     -- Slash commands are passed in empty strings if not specified by user.
     -- Default pos to the length of the waypoints array.
-    if idx == "" then idx = #parkourCourseWaypoints + 1 end
+    if idx == "" then idx = #activeParkourCourseWaypoints + 1 end
 
     -- Check if input is a number
-    if not(tonumber(idx)) then
-        error("Input to /setpoint must be a number. " .. "'" .. idx .. "'" .. " is not not a number.")
+    if not (tonumber(idx)) then
+        error("Input to /setpoint must be a number. " .. "'" .. idx .. "'" ..
+                  " is not not a number.")
     end
 
     -- Check if user is trying to set a point that already exists
-    local keys = TableKeys(parkourCourseWaypoints)
+    local keys = TableKeys(activeParkourCourseWaypoints)
     local err_msg = "That point is already set, remove it first and try again."
     if SetContains(keys, tonumber(idx)) then error(err_msg); end
 
@@ -128,11 +137,31 @@ function SetWaypointAtIndexOnCurrentPosition(idx)
     }
     local uid = TomTom:AddWaypoint(mapID, x, y, opts)
 
-    table.insert(parkourCourseWaypoints, idx, uid)
+    local coursePoint = {uid = uid, hint = "This is a hint"}
+    table.insert(activeParkourCourseWaypoints, idx, coursePoint)
+
+    -- Save course state
+    WorldOfParkour.activeParkourCourseDB.profile.activecourse =
+        activeParkourCourseWaypoints
+end
+
+function RemoveWaypoint(uid)
+    if type(uid) ~= "table" then
+        error("RemoveWaypoint(uid) UID is not a table.");
+    end
+    local idx = GetWaypointCourseIndex(uid)
+    table.remove(activeParkourCourseWaypoints, idx)
+    TomTom:RemoveWaypoint(uid)
+
+    -- Save course state
+    WorldOfParkour.activeParkourCourseDB.profile.activecourse =
+        activeParkourCourseWaypoints
+
 end
 
 function SetWaypointAfterIndexOnCurrentPosition(afterIdx)
     print("FAIL")
+    -- print(parkourCourseWaypoints[1].hint)
     -- -- This function with reorder the waypoints array
     -- if afterIdx == "" then return end
 
@@ -154,25 +183,70 @@ function SetWaypointAfterIndexOnCurrentPosition(afterIdx)
     -- end
 end
 
-function RemoveWaypoint(uid)
-    if type(uid) ~= "table" then error("RemoveWaypoint(uid) UID is not a table."); end
-    local idx = Split(uid.title, "_")[0]
-    table.remove(parkourCourseWaypoints, idx)
-    TomTom:RemoveWaypoint(uid)
+function ResetMemory()
+    activeParkourCourseWaypoints = {}
+    WorldOfParkour.activeParkourCourseDB:ResetProfile()
+    -- WorldOfParkour.activeParkourCourseDB.profile.activecourse = emptyCourse
+
+    TomTom.waydb:ResetProfile()
+    TomTom:ReloadWaypoints()
 end
 
--- Wow error handler
-seterrorhandler(print);
+function WorldOfParkour:ReloadActiveCourse()
+    print("RELOAD")
+    -- Recover our last active parkour course.
+    activeParkourCourseWaypoints = WorldOfParkour.activeParkourCourseDB.profile
+                                       .activecourse
 
+    -- We need to clear the TomTom waypoints because
+    -- by default on reload they will override our callbacks
+    TomTom.waydb:ResetProfile()
+
+    -- Recreate the TomTom waypoints with our callbacks
+    for _, coursePoint in pairs(activeParkourCourseWaypoints) do
+        local uid = coursePoint.uid
+        local m, x, y = unpack(uid)
+
+        -- Set up default options
+        local options = {callbacks = Parkour_callbacks_tomtom}
+
+        -- Recover details from saved waypoints
+        for k, v in pairs(uid) do
+            if type(k) == "string" then
+                if k ~= "callbacks" then
+                    -- we can never import callbacks, so ditch them
+                    options[k] = v
+                end
+            end
+        end
+        TomTom:AddWaypoint(m, x, y, options)
+
+    end
+end
 
 --[[-------------------------------------------------------------------
 --  Define utility functions
--------------------------------------------------------------------]]--
+-------------------------------------------------------------------]] --
+
+function GetWaypointCourseIndex(uid) return string.split("_", uid.title)[0] end
 
 function PrintArray(arr)
     print("table: ")
     for i = 1, #arr do print(arr[i]) end
     print("\n")
+end
+
+function Dump(o)
+    if type(o) == 'table' then
+        local s = '{ '
+        for k, v in pairs(o) do
+            if type(k) ~= 'number' then k = '"' .. k .. '"' end
+            s = s .. '[' .. k .. '] = ' .. Dump(v) .. ','
+        end
+        return s .. '} '
+    else
+        return tostring(o)
+    end
 end
 
 function TableKeys(t)
@@ -186,23 +260,16 @@ function TableKeys(t)
     return keys
 end
 
-function Split(inputstr, sep)
-    if sep == nil then sep = "%s" end
-    local t = {}
-    for str in string.gmatch(inputstr, "([^" .. sep .. "]+)") do
-        table.insert(t, str)
-    end
-    return t
-end
-
 function SetContains(set, key) return set[key] ~= nil end
-
 
 --[[-------------------------------------------------------------------
 --  Define Slash commands
--------------------------------------------------------------------]]--
+-------------------------------------------------------------------]] --
 SLASH_SETPOINT1 = "/setpoint"
 SlashCmdList["SETPOINT"] = SetWaypointAtIndexOnCurrentPosition
 
 SLASH_SETPOINTAFTER1 = "/setpointafter"
 SlashCmdList["SETPOINTAFTER"] = SetWaypointAfterIndexOnCurrentPosition
+
+SLASH_RESET1 = "/reset"
+SlashCmdList["RESET"] = ResetMemory

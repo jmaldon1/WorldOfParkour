@@ -1,13 +1,14 @@
 ## Interface: 90002
-## Title: Parkour
+## Title: WorldOfParkour
 ## Dependencies: TomTom
 ## Notes: Shows a message of "Hello, World!" on screen.
 ## Author: Josh
-## SavedVariables: ParkourWaypoints
+## SavedVariables: WoPActiveParkourCourseDB
 ## Version: 0.0.1
 
 # Lib
-Lib\LibStub\LibStub.lua
+libs\LibStub\LibStub.lua
+libs\AceAddon-3.0\AceAddon-3.0.lua
 
 # Source
-Parkour.lua
+WorldOfParkour.lua
