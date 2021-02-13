@@ -17,10 +17,6 @@ function WorldOfParkour:OnInitialize()
                                          "ReloadActiveCourse")
 
     self.activeCourseStore = self.activeCourseDB.profile
-
-    -- Change some defaults on TomTom
-    TomTom.profile.minimap.default_iconsize = 10
-    TomTom.profile.worldmap.default_iconsize = 10
 end
 
 function WorldOfParkour:OnEnable()
@@ -98,13 +94,13 @@ local function init_dropdown(level)
 end
 
 function InitializeDropdown(uid)
-    print("INIT")
+    -- print("INIT")
     dropdown.uid = uid
     UIDropDownMenu_Initialize(dropdown, init_dropdown)
 end
 
 function Parkour_minimap_onclick(event, uid, self, button)
-    print("CLICK")
+    -- print("CLICK")
     InitializeDropdown(uid)
     _G.ToggleDropDownMenu(1, nil, dropdown, "cursor", 0, 0)
 end
@@ -115,20 +111,60 @@ local Parkour_callbacks_tomtom = {minimap = {onclick = Parkour_minimap_onclick}}
 --  World of Parkour
 -------------------------------------------------------------------]] --
 
+function WorldOfParkour:SyncWithTomTomDB()
+    local newActiveCourse = {}
+    for _, coursePoint in ipairs(self.activeCourseStore.activecourse) do
+        if TomTom:IsValidWaypoint(coursePoint.uid) then
+            -- We are not synced with TomTom's waypoint DB.
+            -- Make a new table that matches TomTom.
+            table.insert(newActiveCourse, coursePoint)
+        end
+    end
+    self.activeCourseStore.activecourse = newActiveCourse
+    -- Sanity check to make sure we are now synced.
+    assert(self:IsSyncedWithTomTomDB())
+    -- Reorder the course to deal with the missing values.
+    self:ReorderCourseWaypoints()
+end
+
+function WorldOfParkour:IsSyncedWithTomTomDB()
+    for _, coursePoint in ipairs(self.activeCourseStore.activecourse) do
+        if not TomTom:IsValidWaypoint(coursePoint.uid) then
+            -- We are not synced with TomTom's waypoint DB
+            return false
+        end
+    end
+    return true
+end
+
 function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
+    local nextAvailablePointIdxBeforeSync =
+        #self.activeCourseStore.activecourse + 1
+    if not self:IsSyncedWithTomTomDB() then
+        self:SyncWithTomTomDB()
+        -- After syncing we need to deal with the new waypoint the user wants added...
+        if idx == nextAvailablePointIdxBeforeSync then
+            -- If we know the user was trying to add
+            -- a point onto the end, we can do that for them.
+            idx = #self.activeCourseStore.activecourse + 1
+        end
+    end
+
+    local nextAvailablePointIdxAfterSync =
+        #self.activeCourseStore.activecourse + 1
+
     if type(idx) ~= "number" then
         error("SetWaypointAtIndexOnCurrentPosition(idx) idx is not a number.");
     end
 
-    local nextAvailablePointIdx = #self.activeCourseStore.activecourse + 1
-    if idx <= 0 or idx > nextAvailablePointIdx then
+    if idx <= 0 or idx > nextAvailablePointIdxAfterSync then
         error("Point index out of range. " ..
                   "The next point you can create is " .. "'" ..
-                  nextAvailablePointIdx .. "'.");
+                  nextAvailablePointIdxAfterSync .. "'.");
     end
 
     -- Create the waypoint
-    local mapID, x, y, opts = unpack(CreateWaypointDetails(idx))
+    local mapID, x, y, opts = unpack(self:CreateWaypointDetails(idx))
     local uid = TomTom:AddWaypoint(mapID, x, y, opts)
 
     -- Save to course state
@@ -137,9 +173,12 @@ function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
 
     -- Reorder course if needed.
     if idx ~= #self.activeCourseStore.activecourse then
+        print("setpoint reorder")
         -- Reorder if the user inserted a point anywhere but the end of the course.
         self:ReorderCourseWaypoints()
     end
+
+    -- self:SyncWithTomTomDB()
 end
 
 function WorldOfParkour:RemoveWaypoint(uid)
@@ -150,8 +189,11 @@ function WorldOfParkour:RemoveWaypoint(uid)
     table.remove(self.activeCourseStore.activecourse, idx)
     TomTom:RemoveWaypoint(uid)
 
+    print("removed len: " .. #self.activeCourseStore.activecourse)
+
     -- Do not reorder if user removed last point.
     if idx - 1 ~= #self.activeCourseStore.activecourse then
+        print("remove reorder")
         self:ReorderCourseWaypoints()
     end
 end
@@ -176,14 +218,16 @@ function WorldOfParkour:ReorderCourseWaypoints()
     self:ReloadActiveCourse()
 end
 
-function CreateWaypointDetails(idx)
+function WorldOfParkour:CreateWaypointDetails(idx)
     local mapID, x, y = TomTom:GetCurrentPlayerPosition()
     local opts = {
         title = "point_" .. idx,
         from = "World of Parkour",
         -- We will handle the persistence on our end.
         persistent = false,
-        callbacks = Parkour_callbacks_tomtom
+        callbacks = Parkour_callbacks_tomtom,
+        minimap_icon_size = 10,
+        worldmap_icon_size = 10
         -- cleardistance = 2
         -- arrivaldistance =
     }
@@ -193,7 +237,7 @@ end
 function WorldOfParkour:ReloadActiveCourse()
     -- Recover our last active parkour course.
     -- We need to recreate our active course store
-    -- becuase the recovered uid's are now invalid.
+    -- because the recovered uid's are now invalid.
     local updatedActiveCourseStore = {}
 
     print("num points: " .. #self.activeCourseStore.activecourse)
@@ -250,31 +294,15 @@ end
 --  Define utility functions
 -------------------------------------------------------------------]] --
 
-function GetCourseIndex(uid) return tonumber(string.split(uid.title, "_")[2]) end
+function GetCourseIndex(uid) return tonumber(Split(uid.title, "_")[2]) end
 
-function string:split(sSeparator, nMax, bRegexp)
-    assert(sSeparator ~= '')
-    assert(nMax == nil or nMax >= 1)
-
-    local aRecord = {}
-
-    if self:len() > 0 then
-        local bPlain = not bRegexp
-        nMax = nMax or -1
-
-        local nField, nStart = 1, 1
-        local nFirst, nLast = self:find(sSeparator, nStart, bPlain)
-        while nFirst and nMax ~= 0 do
-            aRecord[nField] = self:sub(nStart, nFirst - 1)
-            nField = nField + 1
-            nStart = nLast + 1
-            nFirst, nLast = self:find(sSeparator, nStart, bPlain)
-            nMax = nMax - 1
-        end
-        aRecord[nField] = self:sub(nStart)
+function Split(inputstr, sep)
+    if sep == nil then sep = "%s" end
+    local t = {}
+    for str in string.gmatch(inputstr, "([^" .. sep .. "]+)") do
+        table.insert(t, str)
     end
-
-    return aRecord
+    return t
 end
 
 function PrintArray(arr)
