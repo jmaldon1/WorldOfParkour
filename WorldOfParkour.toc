@@ -3,12 +3,15 @@
 ## Dependencies: TomTom
 ## Notes: Shows a message of "Hello, World!" on screen.
 ## Author: Josh
-## SavedVariables: WoPActiveParkourCourseDB
+## SavedVariables: WoPActiveParkourCourseDB, WoPSavedParkourCoursesDB
 ## Version: 0.0.1
 
 # Lib
 libs\LibStub\LibStub.lua
-libs\AceAddon-3.0\AceAddon-3.0.lua
+libs\AceAddon-3.0\AceAddon-3.0.xml
+libs\AceConsole-3.0\AceConsole-3.0.xml
+libs\AceConfig-3.0\AceConfig-3.0.xml
 
 # Source
 WorldOfParkour.lua
+WorldOfParkour_Config.lua
