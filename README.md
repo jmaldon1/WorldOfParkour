@@ -3,7 +3,6 @@ World of Warcraft addon: Parkour puzzles throughout the world.
 
 # Bugs
 
-1. ~~Placing a point and reloading the UI reset the right click dropdown back to the tom tom default one.~~
 
 # TODO
 

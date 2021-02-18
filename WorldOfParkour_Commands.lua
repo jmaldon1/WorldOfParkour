@@ -1,41 +1,56 @@
 --[[-------------------------------------------------------------------
 --  Define Slash commands
 -------------------------------------------------------------------]] --
-function SetPoint(args)
+local function setPointCmd(args)
     if WorldOfParkour:isNotActiveCourse() then NotInActiveModeError() end
     local idx = WorldOfParkour:GetArgs(args, 1)
-    -- Default idx to the next available waypoint position.
-    idx = idx or #WorldOfParkour.activeCourseStore.activecourse.course + 1
 
-    -- Check if input is a number
-    if not (tonumber(idx)) then
+    -- Input must be nil or a number
+    if idx ~= nil and not tonumber(idx) then
         error("Input to /setpoint must be a number. " .. "'" .. idx .. "'" ..
                     " is not a number.")
     end
 
-    -- Check if user is trying to set a point that already exists
-    local keys = TableKeys(WorldOfParkour.activeCourseStore.activecourse.course)
-    local err_msg = "That point is already set, remove it first and try again."
-    if SetContains(keys, tonumber(idx)) then error(err_msg); end
-
-    WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(tonumber(idx))
+    SetPoint(idx)
+    -- Notify changes to GUI
+    AceConfigRegistry:NotifyChange("WorldOfParkour")
 end
 
-local function setPointAfter(args)
+local function setPointAfterCmd(args)
     if WorldOfParkour:isNotActiveCourse() then NotInActiveModeError() end
     local afterIdx = WorldOfParkour:GetArgs(args, 1)
-    if not afterIdx then return end
+    if not afterIdx then error("setPointAfterCmd(args): Point index is required.") end
 
-    -- Check if input is a number
+    -- Input must be a number
     if not tonumber(afterIdx) then
-        error("Input to /setpointafter must be a number. " .. "'" .. afterIdx ..
-                    "'" .. " is not a number.")
+        error("Input to /setpointafter must be a number. " .. "'" .. afterIdx .. "'" ..
+                    " is not a number.")
     end
 
-    WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(tonumber(afterIdx) + 1)
+    SetPoint(tonumber(afterIdx) + 1)
+    -- Notify changes to GUI
+    AceConfigRegistry:NotifyChange("WorldOfParkour")
 end
 
-WorldOfParkour:RegisterChatCommand("setpoint", SetPoint)
-WorldOfParkour:RegisterChatCommand("setpointafter", setPointAfter)
+function SetPoint(idx)
+    -- Default idx to the next available waypoint position.
+    idx = idx or #WorldOfParkour.activeCourseStore.activecourse.course + 1
+
+    WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
+
+    -- Add point to GUI
+    local uuidPattern = "%w+-%w+-4%w+-%w+-%w+"
+    local activeCourseGUI = WorldOfParkour.GUIoptionsStore.options.args.activecourse
+                           .args
+    for k, _ in pairs(activeCourseGUI) do
+        -- Find the active course, there will only be 1.
+        if string.match(k, uuidPattern) then
+            ReloadPointsToGUI(k)
+        end
+    end
+end
+
+WorldOfParkour:RegisterChatCommand("setpoint", setPointCmd)
+WorldOfParkour:RegisterChatCommand("setpointafter", setPointAfterCmd)
 WorldOfParkour:RegisterChatCommand("reset", "ResetMemory")
 WorldOfParkour:RegisterChatCommand("resetc", "ClearSavedCourses")

@@ -25,6 +25,7 @@ local dropdown_info = {
                 local uid = dropdown.uid
                 local data = uid
                 WorldOfParkour:RemoveWaypointAndReorder(uid)
+                AceConfigRegistry:NotifyChange("WorldOfParkour")
 
                 -- TomTom:Printf("Removing waypoint %0.2f, %0.2f in %s", data.x, data.y, data.zone)
             end
@@ -32,11 +33,11 @@ local dropdown_info = {
             text = "Show hint",
             func = function()
                 local uid = dropdown.uid
+                local title = uid.title
                 local idx = GetCourseIndex(uid)
                 local coursePoint = WorldOfParkour.activeCourseStore
                                         .activecourse.course[idx]
-                WorldOfParkour:Printf("Hint for point %s: %s", idx,
-                                      coursePoint.hint)
+                WorldOfParkour:Printf("Hint for %s: %s", title, coursePoint.hint)
             end
         }
     }
@@ -87,10 +88,14 @@ local function _both_onclick(event, uid, self, button)
 end
 
 local function _both_clear_distance(event, uid, range, distance, lastdistance)
+    -- Don't clear if we are in edit mode.
+    if WorldOfParkour:isInEditMode() then return end
+
     -- Only clear the waypoint if we weren't inside it when it was set
     if lastdistance and not UnitOnTaxi("player") then
         local idx = GetCourseIndex(uid)
-        local activeCourse = WorldOfParkour.activeCourseStore.activecourse.course
+        local activeCourse = WorldOfParkour.activeCourseStore.activecourse
+                                 .course
         activeCourse[idx].completed = true
         -- Check if the user is at the last point in the course.
         if idx ~= #activeCourse then

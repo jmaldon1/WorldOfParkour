@@ -1,4 +1,5 @@
 -- Add standard addon support.
+AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 WorldOfParkour = LibStub("AceAddon-3.0"):NewAddon("WorldOfParkour",
                                                   "AceConsole-3.0",
                                                   "AceTimer-3.0")
@@ -36,6 +37,8 @@ function WorldOfParkour:OnInitialize()
                                                  self.GUIoptionsDefaults)
     self.GUIoptionsStore = self.GUIoptionsDB.profile
 
+    self.courseSearch = ""
+
     self:CreateGUI()
 end
 
@@ -44,9 +47,7 @@ function WorldOfParkour:OnEnable()
     self:CreateConfig()
 
     -- Reload last active parkour course on load.
-    if self:isActiveCourse() then
-        self:ReloadActiveCourse()
-    end
+    if self:isActiveCourse() then self:ReloadActiveCourse() end
 end
 
 -- Wow error handler
@@ -94,8 +95,10 @@ function WorldOfParkour:SyncWithTomTomDB()
     end
     self.activeCourseStore.activecourse.course = newActiveCourse
     -- Sanity check to make sure we are now synced.
-    assert(self:IsSyncedWithTomTomDB(),
-           WoPMessage("We aren't synced? Report this bug."))
+    if #self.activeCourseStore.activecourse.course ~= 0 then
+        assert(self:IsSyncedWithTomTomDB(),
+               WoPMessage("We aren't synced? Report this bug."))
+    end
     -- Reorder the course to deal with the missing values.
     self:ReorderCourseWaypoints()
 end
@@ -103,7 +106,7 @@ end
 function WorldOfParkour:IsSyncedWithTomTomDB()
     if self:isNotActiveCourse() then NotInActiveModeError() end
 
-    if (#self.activeCourseStore.activecourse.course == 0) then
+    if #self.activeCourseStore.activecourse.course == 0 then
         -- If there are 0 points in the our course, it is not possible to determine
         -- if we are synced with TomTom's DB or not. So we throw.
         error("Unable to determine if we are synced with TomTomDB...")
@@ -117,14 +120,22 @@ function WorldOfParkour:IsSyncedWithTomTomDB()
     return true
 end
 
+function WorldOfParkour:CheckIfPointExists(uid)
+    -- This can prevent duplicates from entering our system.
+    local key = TomTom:GetKey(uid)
+    for _, coursePoint in ipairs(self.activeCourseStore.activecourse.course) do
+        if TomTom:GetKey(coursePoint.uid) == key then return true end
+    end
+    return false
+end
+
 function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
     if self:isNotActiveCourse() then NotInActiveModeError() end
     if self:isNotInEditMode() then NotInEditModeError() end
 
-    -- if not self.courseCreationMode then error("You must be in course creation mode to create a point.") end
-    local activeCourseLenBeforeSync = #self.activeCourseStore.activecourse.course
-    local nextAvailablePointIdxBeforeSync = activeCourseLenBeforeSync + 1
-    if not activeCourseLenBeforeSync == 0 then
+    local nextAvailablePointIdxBeforeSync =
+        #self.activeCourseStore.activecourse.course + 1
+    if #self.activeCourseStore.activecourse.course ~= 0 then
         if not self:IsSyncedWithTomTomDB() then
             self:SyncWithTomTomDB()
             -- After syncing we need to deal with the new waypoint the user wants added...
@@ -136,8 +147,8 @@ function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
         end
     end
 
-    -- local activeCourseLenAfterSync = #self.activeCourseStore.activecourse.course
-    local nextAvailablePointIdxAfterSync = #self.activeCourseStore.activecourse.course + 1
+    local nextAvailablePointIdxAfterSync =
+        #self.activeCourseStore.activecourse.course + 1
 
     if type(idx) ~= "number" then
         error("SetWaypointAtIndexOnCurrentPosition(idx) idx is not a number.");
@@ -153,26 +164,20 @@ function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
     local mapID, x, y, opts = unpack(self:CreateWaypointDetails(idx))
     local uid = TomTom:AddWaypoint(mapID, x, y, opts)
 
+    -- Do nothing if the point already exists in our Store.
+    if self:CheckIfPointExists(uid) then return end
+
     -- Save to active course state
-    local coursePoint = {
-        uid = uid,
-        hint = "This is idx" .. idx,
-        completed = false
-    }
+    local coursePoint = {uid = uid, hint = "No hint", completed = false}
     table.insert(self.activeCourseStore.activecourse.course, idx, coursePoint)
 
-    -- Reorder course if needed.
     if idx ~= #self.activeCourseStore.activecourse.course then
-        print("HERE")
         -- Reorder if the user inserted a point anywhere but the end of the course.
         self:ReorderCourseWaypoints()
     end
-    -- TODO: Maybe a good place to add points to GUI.
 end
 
 function WorldOfParkour:RemoveWaypointAndReorder(uid)
-    -- if not self.courseCreationMode then error("You must be in course creation mode to remove a point.") end
-
     if type(uid) ~= "table" then
         error("RemoveWaypoint(uid) UID is not a table.");
     end
@@ -181,14 +186,27 @@ function WorldOfParkour:RemoveWaypointAndReorder(uid)
 
     -- Do not reorder if user removed last point.
     if idx - 1 ~= #self.activeCourseStore.activecourse.course then
-        print("reorder")
         self:ReorderCourseWaypoints()
     end
 
-    if not self:IsSyncedWithTomTomDB() then self:SyncWithTomTomDB() end
+    if #self.activeCourseStore.activecourse.course ~= 0 then
+        if not self:IsSyncedWithTomTomDB() then self:SyncWithTomTomDB() end
+    end
+
+    -- -- Add point to GUI
+    local uuidPattern = "%w+-%w+-4%w+-%w+-%w+"
+    local activeCourseGUI = WorldOfParkour.GUIoptionsStore.options.args
+                                .activecourse.args
+    for k, _ in pairs(activeCourseGUI) do
+        -- Find the active course, there will only be 1.
+        if string.match(k, uuidPattern) then ReloadPointsToGUI(k) end
+    end
 end
 
 function WorldOfParkour:RemoveWaypoint(uid)
+    if self:isNotActiveCourse() then NotInActiveModeError() end
+    if self:isNotInEditMode() then NotInEditModeError() end
+
     local idx = GetCourseIndex(uid)
     table.remove(self.activeCourseStore.activecourse.course, idx)
     TomTom:RemoveWaypoint(uid)
@@ -275,9 +293,23 @@ function WorldOfParkour:ReloadActiveCourse()
 end
 
 function WorldOfParkour:NewCourseDefaults()
-    -- TODO: Not done...
+    local title = "New Parkour Course"
+    -- TODO: MAYBE add identifier at the end of title.
+    -- local count = 0
+    -- for k, v in pairs(self.savedCoursesStore.savedcourses) do
+    --     if StartsWith(v.title, title) then
+    --         local number = tonumber(string.match(v.title, "%d+"))
+    --         count = math.max(count, number)
+    --     end
+    -- end
+
+    -- -- title = title ..
+    -- if count ~= 0 then
+    --     title = title .. count
+    -- end
+
     return {
-        title = "New Parkour Course",
+        title = title,
         description = "Describe me",
         id = UUID(),
         course = {}
@@ -285,7 +317,7 @@ function WorldOfParkour:NewCourseDefaults()
 end
 
 function WorldOfParkour:RemoveAllTomTomWaypoints()
-    if self:isNotActiveCourse() then notInActiveModeError() end
+    if self:isNotActiveCourse() then NotInActiveModeError() end
     if #self.activeCourseStore.activecourse.course == 0 then return end
     -- NOTE: This will ONLY remove WorldOfParkour TomTom waypoints.
     for _, coursePoint in pairs(self.activeCourseStore.activecourse.course) do
@@ -295,9 +327,7 @@ function WorldOfParkour:RemoveAllTomTomWaypoints()
 end
 
 function WorldOfParkour:ResetMemory()
-    if self:isActiveCourse() then
-        self:RemoveAllTomTomWaypoints()
-    end
+    if self:isActiveCourse() then self:RemoveAllTomTomWaypoints() end
     self.activeCourseStore.activecourse.course = {}
     self.activeCourseDB:ResetProfile()
     self.activeCourseDB:ResetDB()
@@ -332,7 +362,8 @@ end
 
 function Difference(a, b)
     if #b > #a then
-        error("You must flip the inputs OR ensure that the table lengths are equal.")
+        error(
+            "You must flip the inputs OR ensure that the table lengths are equal.")
     end
     local aa = {}
     for k, v in pairs(a) do aa[v] = true end
@@ -400,6 +431,10 @@ function TableKeys(t)
         keys[n] = k
     end
     return keys
+end
+
+function StartsWith(str, start)
+    return string.sub(str, 1, string.len(start)) == start
 end
 
 function Tablelength(T)
