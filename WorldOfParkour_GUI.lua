@@ -14,15 +14,15 @@ local function findCourseIdRecursive(info, level)
     return findCourseIdRecursive(info, level + 1)
 end
 
-local function setCrazyArrowToFirstOrLastPoint(option)
+function SetCrazyArrowToFirstOrLastPoint(option)
     local course = WorldOfParkour.activeCourseStore.activecourse.course
     if #course == 0 then return end
 
     if option == "first" then
-        TomTom:SetCrazyArrow(course[1].uid, TomTom.profile.arrow.arrival,
+        TomTom:SetCrazyArrow(course[1].uid, WorldOfParkour.arrivalDistance,
                              course[1].uid.title)
     elseif option == "last" then
-        TomTom:SetCrazyArrow(course[#course].uid, TomTom.profile.arrow.arrival,
+        TomTom:SetCrazyArrow(course[#course].uid, WorldOfParkour.arrivalDistance,
                              course[#course].uid.title)
     else
         error("Input must be either {'first', 'last'}")
@@ -34,13 +34,15 @@ local function findSavedCourseKeyById(savedCourses, id)
 end
 
 local function enableEditMode()
+    -- Reset the course completion before editing.
+    WorldOfParkour:ResetCourseCompletion()
     WorldOfParkour.activeCourseStore.isInEditMode = true
-    setCrazyArrowToFirstOrLastPoint("last")
+    SetCrazyArrowToFirstOrLastPoint("last")
 end
 
 local function disableEditMode()
     WorldOfParkour.activeCourseStore.isInEditMode = false
-    setCrazyArrowToFirstOrLastPoint("first")
+    SetCrazyArrowToFirstOrLastPoint("first")
 end
 
 local function enableActiveCourse()
@@ -75,12 +77,20 @@ local function selectCourse(courseId)
     AceConfigDialog:SelectGroup("WorldOfParkour", "courselist", courseId)
 end
 
+local function getEditableCourseTitle()
+    return WorldOfParkour.activeCourseStore.activecourse.title
+end
+
 local function setEditableCourseTitle(info, title)
     WorldOfParkour.activeCourseStore.activecourse.title = title
 end
 
-local function getEditableCourseTitle()
-    return WorldOfParkour.activeCourseStore.activecourse.title
+local function getEditableCourseDescription()
+    return WorldOfParkour.activeCourseStore.activecourse.description
+end
+
+local function setEditableCourseDescription(info, description)
+    WorldOfParkour.activeCourseStore.activecourse.description = description
 end
 
 local function disableActiveCourseFromAllCourses(info)
@@ -309,6 +319,47 @@ function CreatePointsListGUI()
     }
 end
 
+local function isCoursePointsDifferent(courseAPoints, courseBPoints)
+    if #courseAPoints ~= #courseBPoints then return true end
+
+    local courseAPointIds = {}
+    local courseBPointIds = {}
+
+    for _, coursePoint in pairs(courseAPoints) do
+        table.insert(courseAPointIds, TomTom:GetKey(coursePoint.uid))
+    end
+    for _, coursePoint in pairs(courseBPoints) do
+        table.insert(courseBPointIds, TomTom:GetKey(coursePoint.uid))
+    end
+
+    if #Difference(courseAPointIds, courseBPointIds) == 0 then return false end
+    return true
+end
+
+local function isCourseDetailsDifferent(courseA, courseB)
+    for detailName, detail in pairs(courseA) do
+        -- Skip the course points
+        if detailName ~= "course" then
+            if courseB[detailName] ~= detail then return true end
+        end
+    end
+    return false
+end
+
+local function disableUndo()
+    -- If we are not in editing mode, disable button.
+    if WorldOfParkour:isNotInEditMode() then return true end
+    local backupActiveCourse = WorldOfParkour.activeCourseStore
+                                   .backupActivecourse
+    local activeCourse = WorldOfParkour.activeCourseStore.activecourse
+    local isCoursePointsDiff = isCoursePointsDifferent(activeCourse.course,
+                                                       backupActiveCourse.course)
+    local isCourseDetailsDiff = isCourseDetailsDifferent(activeCourse,
+                                                         backupActiveCourse)
+    -- If courses are not different, disable button.
+    return not isCoursePointsDiff and not isCourseDetailsDiff
+end
+
 local function createActiveCourseGUI()
     local activeCourse = {
         name = getEditableCourseTitle,
@@ -321,12 +372,26 @@ local function createActiveCourseGUI()
                 type = "group",
                 order = 1,
                 args = {
+                    range = {
+                        name = "Course Completion",
+                        desc = "complete",
+                        type = "range",
+                        width = "full",
+                        min = 0,
+                        max = 1,
+                        disabled = true,
+                        isPercent = true,
+                        order = 1,
+                        get = Bind(WorldOfParkour, "GetCourseCompletion")
+                    },
+                    blank = {order = 3, type = "description", name = "\n"},
                     unsetactivecourse = {
                         name = "Unset Active Course",
                         desc = "Remove this course from Active Course." ..
                             "\n\nIf you edited this course, this will save your changes.",
                         type = "execute",
                         width = "full",
+                        order = 4,
                         func = unsetActiveCourse
                     }
                 }
@@ -336,30 +401,46 @@ local function createActiveCourseGUI()
                 type = "group",
                 order = 2,
                 args = {
+                    editcourse = {
+                        name = "Edit Course",
+                        desc = "Edit the course",
+                        confirm = Bind(WorldOfParkour, "IsCourseBeingRun"),
+                        confirmText = "Editing the course now will reset your completion progress. Are you sure?\n\n" ..
+                        "If you would like to edit this course without losing your progress, make a copy and edit that.",
+                        type = "execute",
+                        disabled = Bind(WorldOfParkour, "isInEditMode"),
+                        width = 0.85,
+                        order = 1,
+                        func = enableEditMode
+                    },
+                    blankone = {order = 2, type = "description", name = ""},
                     title = {
                         name = "Course Name",
                         validate = validateCourseTitle,
                         desc = "Set the title of the course",
                         type = "input",
-                        order = 1,
+                        order = 3,
                         disabled = Bind(WorldOfParkour, "isNotInEditMode"),
                         set = setEditableCourseTitle,
                         get = getEditableCourseTitle
                     },
-                    editcourse = {
-                        name = "Edit Course",
-                        desc = "Edit the course",
-                        type = "execute",
-                        disabled = Bind(WorldOfParkour, "isInEditMode"),
-                        width = 0.85,
-                        order = 2,
-                        func = enableEditMode
+                    blanktwo = {order = 4, type = "description", name = ""},
+                    description = {
+                        name = "Description",
+                        desc = "Set the description of the course.",
+                        type = "input",
+                        multiline = true,
+                        width = "double",
+                        order = 5,
+                        disabled = Bind(WorldOfParkour, "isNotInEditMode"),
+                        set = setEditableCourseDescription,
+                        get = getEditableCourseDescription
                     },
                     pointslist = {
                         name = "Course Points",
                         type = "group",
                         disabled = Bind(WorldOfParkour, "isNotInEditMode"),
-                        order = 3,
+                        order = 6,
                         args = CreatePointsListGUI()
                     }
                 }
@@ -369,25 +450,40 @@ local function createActiveCourseGUI()
                 type = "group",
                 order = 3,
                 args = {
-                    exiteditwithsave = {
+                    save = {
                         name = "Save changes",
-                        desc = "Save all changes made while editing the course.",
+                        desc = "Save all changes made while editing the course.\n\n" ..
+                            "If no changes were made, this will just exit out of editing mode.",
                         type = "execute",
                         width = "double",
                         disabled = Bind(WorldOfParkour, "isNotInEditMode"),
                         order = 1,
                         func = ExitWithSave
                     },
-                    blank = {order = 2, type = "description", name = "\n\n\n"},
-                    exiteditwithoutsave = {
+                    blank = {order = 2, type = "description", name = "\n"},
+                    undo = {
                         name = "Undo changes",
                         desc = "Undo all changes made while editing this course.",
                         type = "execute",
+                        confirm = true,
+                        confirmText = "Are you sure you want to undo these changes?\n\n" ..
+                            "You cannot recover them.",
                         width = "double",
-                        disabled = Bind(WorldOfParkour, "isNotInEditMode"),
+                        disabled = disableUndo,
                         order = 3,
                         func = ExitWithoutSaving
-                    }
+                    },
+                    blank_ = {order = 4, type = "description", name = "\n\n\n"},
+                    resetcoursecompletion = {
+                        name = "Reset course completion",
+                        desc = "Reset the course, allowing you to run the coures again.",
+                        type = "execute",
+                        width = "double",
+                        confirm = true,
+                        confirmText = "Are you sure you want to reset the course completion?",
+                        order = 5,
+                        func = Bind(WorldOfParkour, "ResetCourseCompletion")
+                    },
                 }
             }
         }
@@ -402,32 +498,15 @@ local function createActiveCourseGUI()
     return activeCourse
 end
 
-local function isCoursesDifferent(courseA, courseB)
-    if #courseA ~= #courseB then return true end
-
-    local courseAIds = {}
-    local courseBIds = {}
-
-    for _, coursePoint in pairs(courseA) do
-        table.insert(courseAIds, TomTom:GetKey(coursePoint.uid))
-    end
-    for _, coursePoint in pairs(courseB) do
-        table.insert(courseBIds, TomTom:GetKey(coursePoint.uid))
-    end
-
-    if #Difference(courseAIds, courseBIds) == 0 then return false end
-    return true
-end
-
 function ExitWithoutSaving()
     local backupActiveCourse = WorldOfParkour.activeCourseStore
                                    .backupActivecourse
     local courseId = WorldOfParkour.activeCourseStore.activecourse.id
     local backupActiveCourseCopy = Deepcopy(backupActiveCourse)
-    local isCoursesDiff = isCoursesDifferent(
-                              WorldOfParkour.activeCourseStore.activecourse
-                                  .course, backupActiveCourse.course)
-    if isCoursesDiff then WorldOfParkour:RemoveAllTomTomWaypoints() end
+    local activeCourse = WorldOfParkour.activeCourseStore.activecourse
+    local isCoursePointsDiff = isCoursePointsDifferent(activeCourse.course,
+                                                       backupActiveCourse.course)
+    if isCoursePointsDiff then WorldOfParkour:RemoveAllTomTomWaypoints() end
 
     ReplaceTable(backupActiveCourseCopy,
                  WorldOfParkour.activeCourseStore.activecourse)
@@ -435,9 +514,9 @@ function ExitWithoutSaving()
     WorldOfParkour.GUIoptionsStore.options.args.activecourse.args[courseId] =
         createActiveCourseGUI()
 
-    if isCoursesDiff and not #backupActiveCourse.course == 0 then
+    if isCoursePointsDiff and not #backupActiveCourse.course == 0 then
         -- Only sync if the user made changes to the course points
-        -- and the backup has more than 0 points.
+        -- and the backup actually has points.
         WorldOfParkour:SyncWithTomTomDB()
     end
     -- Reload the TomTom waypoints.
@@ -488,7 +567,7 @@ local function setActiveCourse(info, action)
     enableActiveCourse()
     -- Add TomTom waypoints to screen.
     if #savedCourse.course ~= 0 then WorldOfParkour:ReloadActiveCourse() end
-    setCrazyArrowToFirstOrLastPoint("first")
+    SetCrazyArrowToFirstOrLastPoint("first")
 
     WorldOfParkour:ScheduleTimer(selectActiveCourse, 0, courseId)
 end
@@ -507,6 +586,7 @@ local function createSavedCourseGUI()
                 type = "description",
                 order = 2
             },
+            blank_ = {order = 3, type = "description", name = "\n\n"},
             setactivecourse = {
                 name = "Set As Active Course",
                 desc = "Edit the course",
@@ -514,18 +594,18 @@ local function createSavedCourseGUI()
                 width = "full",
                 disabled = Bind(WorldOfParkour, "isActiveCourse"),
                 func = setActiveCourse,
-                order = 3
+                order = 4
             },
-            blankone = {order = 4, type = "description", name = "\n"},
+            blank__ = {order = 5, type = "description", name = "\n"},
             copycourse = {
                 name = "Copy Course",
                 desc = "Create a copy of this course",
                 type = "execute",
                 func = CopyCourse,
                 width = "full",
-                order = 5
+                order = 6
             },
-            blanktwo = {order = 6, type = "description", name = "\n\n"},
+            blank___ = {order = 7, type = "description", name = "\n\n"},
             removecourse = {
                 name = "Remove Course",
                 desc = "Permanently delete this course",
@@ -534,7 +614,7 @@ local function createSavedCourseGUI()
                 type = "execute",
                 func = removeCourse,
                 width = "full",
-                order = 7
+                order = 8
             }
         }
     }
@@ -554,7 +634,7 @@ function CopyCourse(info)
     table.insert(WorldOfParkour.savedCoursesStore.savedcourses, savedCourseCopy)
     -- Add course to GUI
     WorldOfParkour.GUIoptionsStore.options.args.courselist.args[uuid] =
-    newCourseGUI
+        newCourseGUI
     -- Select the new course once its been created.
     WorldOfParkour:ScheduleTimer(selectCourse, 0, uuid)
 end

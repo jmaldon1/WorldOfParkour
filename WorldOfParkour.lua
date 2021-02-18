@@ -37,6 +37,7 @@ function WorldOfParkour:OnInitialize()
                                                  self.GUIoptionsDefaults)
     self.GUIoptionsStore = self.GUIoptionsDB.profile
 
+    self.arrivalDistance = 5
     self.courseSearch = ""
 
     self:CreateGUI()
@@ -62,11 +63,13 @@ end
 --  WorldOfParkour
 -------------------------------------------------------------------]] --
 function NotInActiveModeError()
-    error("You must have an Active Course to perform this action.")
+    WorldOfParkour:Print("You must have an Active Course to perform this action.")
+    error("Wrong mode.")
 end
 
 function NotInEditModeError()
-    error("You must be in edit mode to perform this action.")
+    WorldOfParkour:Print("You must be in edit mode to perform this action.")
+    error("Wrong mode.")
 end
 
 function WorldOfParkour:isActiveCourse()
@@ -129,6 +132,44 @@ function WorldOfParkour:CheckIfPointExists(uid)
     return false
 end
 
+function WorldOfParkour:IsCourseBeingRun() return
+    self:GetCourseCompletion() ~= 0 end
+
+function WorldOfParkour:ResetCourseCompletion()
+    if self:isNotActiveCourse() then NotInActiveModeError() end
+
+    for _, coursePoint in pairs(self.activeCourseStore.activecourse.course) do
+        coursePoint.completed = false
+    end
+
+    self:ReloadActiveCourse()
+end
+
+function WorldOfParkour:GetCourseCompletion()
+    if self:isNotActiveCourse() then NotInActiveModeError() end
+    local course = self.activeCourseStore.activecourse.course
+    if #course == 0 then return 0 end
+
+    local isCompleted = function(coursePoint)
+        return coursePoint.completed == true
+    end
+    local completePoints = Filter(course, isCompleted)
+    return #completePoints / #course
+end
+
+function WorldOfParkour:GetNextUncompletedPoint()
+    -- Find the next uncompleted course point, return nil if all points are completed
+    local course = self.activeCourseStore.activecourse.course
+    for _, v in pairs(course) do
+        if v.completed == false then return v.uid end
+    end
+    return nil
+end
+
+function WorldOfParkour:CreateCoursePoint(uid)
+    return {uid = uid, hint = "No hint", completed = false}
+end
+
 function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
     if self:isNotActiveCourse() then NotInActiveModeError() end
     if self:isNotInEditMode() then NotInEditModeError() end
@@ -168,7 +209,7 @@ function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
     if self:CheckIfPointExists(uid) then return end
 
     -- Save to active course state
-    local coursePoint = {uid = uid, hint = "No hint", completed = false}
+    local coursePoint = self:CreateCoursePoint(uid)
     table.insert(self.activeCourseStore.activecourse.course, idx, coursePoint)
 
     if idx ~= #self.activeCourseStore.activecourse.course then
@@ -242,8 +283,7 @@ function WorldOfParkour:CreateWaypointDetails(idx)
         callbacks = self:CreateTomTomCallbacks(),
         minimap_icon_size = 10,
         worldmap_icon_size = 10,
-        arrivaldistance = 5
-        -- cleardistance = 2
+        arrivaldistance = self.arrivalDistance
     }
     return {mapID, x, y, opts}
 end
@@ -276,6 +316,10 @@ function WorldOfParkour:ReloadActiveCourse()
         end
 
         local updatedUid = TomTom:AddWaypoint(m, x, y, options)
+        if coursePoint.completed == true then
+            -- Don't show waypoints that are already completed.
+            TomTom:RemoveWaypoint(updatedUid)
+        end
         local updatedCoursePoint = {uid = updatedUid}
 
         -- Move details from old coursePoint to new coursePoint
@@ -290,27 +334,37 @@ function WorldOfParkour:ReloadActiveCourse()
     end
 
     self.activeCourseStore.activecourse.course = updatedActiveCourseStore
+    if self:isInEditMode() then
+        SetCrazyArrowToFirstOrLastPoint("last")
+    else
+        local nextUncompletedUid = self:GetNextUncompletedPoint()
+        if not nextUncompletedUid then return end
+        TomTom:SetCrazyArrow(nextUncompletedUid, self.arrivalDistance,
+                             nextUncompletedUid.title)
+    end
+end
+
+local function makeUniqueCourseTitle(defaultCourseTitle)
+    local getCourseTitle = function(course) return course.title end
+    local savedCourses = WorldOfParkour.savedCoursesStore.savedcourses
+    local allCourseTitlesArray = Map(savedCourses, getCourseTitle)
+    local allCourseTitles = ConvertArrayValsToTableKeys(allCourseTitlesArray)
+    if not SetContains(allCourseTitles, defaultCourseTitle) then
+        -- If the default name isn't used yet, use it.
+        return defaultCourseTitle
+    end
+
+    local name = defaultCourseTitle .. " %s"
+    local i = 1
+    while SetContains(allCourseTitles, string.format(name, i)) do i = i + 1 end
+    return string.format(name, i)
 end
 
 function WorldOfParkour:NewCourseDefaults()
-    local title = "New Parkour Course"
-    -- TODO: MAYBE add identifier at the end of title.
-    -- local count = 0
-    -- for k, v in pairs(self.savedCoursesStore.savedcourses) do
-    --     if StartsWith(v.title, title) then
-    --         local number = tonumber(string.match(v.title, "%d+"))
-    --         count = math.max(count, number)
-    --     end
-    -- end
-
-    -- -- title = title ..
-    -- if count ~= 0 then
-    --     title = title .. count
-    -- end
-
+    -- While unique course names are not required, it makes readability easier.
     return {
-        title = title,
-        description = "Describe me",
+        title = makeUniqueCourseTitle("New Parkour Course"),
+        description = "Description of course",
         id = UUID(),
         course = {}
     }
@@ -353,11 +407,23 @@ function UUID()
     end)
 end
 
+function ConvertArrayValsToTableKeys(arr)
+    local t = {}
+    for k, v in pairs(arr) do t[v] = k end
+    return t
+end
+
 function Map(t, f)
     local t1 = {}
     local t_len = #t
     for i = 1, t_len do t1[i] = f(t[i]) end
     return t1
+end
+
+function Filter(tbl, func)
+    local newtbl = {}
+    for i, v in pairs(tbl) do if func(v) then newtbl[i] = v end end
+    return newtbl
 end
 
 function Difference(a, b)

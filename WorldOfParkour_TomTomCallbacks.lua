@@ -14,6 +14,9 @@ local dropdown_info = {
             -- set as crazy arrow
             text = "Set as waypoint arrow",
             func = function()
+                if WorldOfParkour:isNotInEditMode() then
+                    NotInEditModeError()
+                end
                 local uid = dropdown.uid
                 local data = uid
                 TomTom:SetCrazyArrow(uid, TomTom.profile.arrow.arrival,
@@ -22,8 +25,10 @@ local dropdown_info = {
         }, { -- Remove waypoint
             text = "Remove waypoint",
             func = function()
+                if WorldOfParkour:isNotInEditMode() then
+                    NotInEditModeError()
+                end
                 local uid = dropdown.uid
-                local data = uid
                 WorldOfParkour:RemoveWaypointAndReorder(uid)
                 AceConfigRegistry:NotifyChange("WorldOfParkour")
 
@@ -105,6 +110,8 @@ local function _both_clear_distance(event, uid, range, distance, lastdistance)
                                  nextUid.title)
         end
         TomTom:RemoveWaypoint(uid)
+        -- Notify that a point as been completed
+        AceConfigRegistry:NotifyChange("WorldOfParkour")
     end
 end
 
@@ -122,8 +129,10 @@ function WorldOfParkour:CreateTomTomCallbacks()
             tooltip_show = defaultCallbacks.world.tooltip_show,
             tooltip_update = defaultCallbacks.world.tooltip_update
         },
-        -- TODO: This function should only be here when outside of creation mode.
-        distance = {[3] = function(...) _both_clear_distance(...); end}
+        distance = {
+            -- This table is indexed by distance, so the Key is the distance to clear the waypoint.
+            [3] = function(...) _both_clear_distance(...); end
+        }
     }
     return callbacks
 end
