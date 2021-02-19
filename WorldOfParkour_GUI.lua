@@ -568,12 +568,23 @@ local function setActiveCourse(info, action)
                  WorldOfParkour.activeCourseStore.backupActivecourse)
 
     enableActiveCourse()
+
+    -- Add TomTom waypoints to screen.
+    if #savedCourse.course ~= 0 then
+        local isSuccess, err = pcall(Bind(WorldOfParkour, "ReloadActiveCourse"))
+        if not isSuccess then
+            -- User tried to load a bad course, we stop them here.
+            disableActiveCourse()
+            WorldOfParkour.activeCourseStore.activecourse = {}
+            WorldOfParkour.activeCourseStore.backupActivecourse = {}
+            error(err)
+        end
+    end
+
     -- Add to GUI
     WorldOfParkour.GUIoptionsStore.options.args.activecourse.args[courseId] =
         createActiveCourseGUI()
 
-    -- Add TomTom waypoints to screen.
-    if #savedCourse.course ~= 0 then WorldOfParkour:ReloadActiveCourse() end
     SetCrazyArrowToFirstOrLastPoint("first")
 
     WorldOfParkour:ScheduleTimer(selectActiveCourse, 0, courseId)

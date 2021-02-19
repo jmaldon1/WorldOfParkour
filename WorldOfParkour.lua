@@ -339,7 +339,13 @@ function WorldOfParkour:ReloadActiveCourse()
             end
         end
 
-        local updatedUid = TomTom:AddWaypoint(m, x, y, options)
+        local isSuccess, results = pcall(Bind(TomTom, "AddWaypoint"), m, x, y,
+                                         options)
+        if not isSuccess then
+            error("This course is invalid, please delete it.")
+        end
+
+        local updatedUid = results
         if coursePoint.completed == true then
             -- Don't show waypoints that are already completed.
             TomTom:RemoveWaypoint(updatedUid)
@@ -391,7 +397,7 @@ function WorldOfParkour:NewCourseDefaults()
         description = "Description of course",
         id = UUID(),
         course = {},
-        compressedcoursedata = nil
+        compressedcoursedata = ""
     }
 end
 
@@ -521,6 +527,12 @@ function TableKeys(t)
         n = n + 1
         keys[n] = k
     end
+    return keys
+end
+
+function TableKeysToTable(t)
+    local keys = {}
+    for k, v in pairs(t) do keys[k] = true end
     return keys
 end
 
