@@ -96,6 +96,12 @@ local function _both_clear_distance(event, uid, range, distance, lastdistance)
     -- Don't clear if we are in edit mode.
     if WorldOfParkour:isInEditMode() then return end
 
+    -- Dont clear if it is not the next waypoint.
+    local nextUncompletedPoint = WorldOfParkour:GetNextUncompletedPoint()
+    if TomTom:GetKey(uid) ~= TomTom:GetKey(nextUncompletedPoint) then
+        return
+    end
+
     -- Only clear the waypoint if we weren't inside it when it was set
     if lastdistance and not UnitOnTaxi("player") then
         local idx = GetCourseIndex(uid)

@@ -2,16 +2,14 @@
 AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 WorldOfParkour = LibStub("AceAddon-3.0"):NewAddon("WorldOfParkour",
                                                   "AceConsole-3.0",
-                                                  "AceTimer-3.0")
+                                                  "AceTimer-3.0", "AceEvent-3.0")
 
 function WorldOfParkour:OnInitialize()
     self.activeCourseDefaults = {
         profile = {
             isInEditMode = false,
             isActiveCourse = false,
-            activecourse = {
-                -- course = {}
-            },
+            activecourse = {},
             backupActivecourse = {}
         }
     }
@@ -39,6 +37,10 @@ function WorldOfParkour:OnInitialize()
 
     self.arrivalDistance = 5
     self.courseSearch = ""
+    self.showCourseString = {}
+    self.importCourseString = ""
+
+    -- self:RegisterEvent("OnHyperlinkShow", HandleChatLink)
 
     self:CreateGUI()
 end
@@ -63,7 +65,8 @@ end
 --  WorldOfParkour
 -------------------------------------------------------------------]] --
 function NotInActiveModeError()
-    WorldOfParkour:Print("You must have an Active Course to perform this action.")
+    WorldOfParkour:Print(
+        "You must have an Active Course to perform this action.")
     error("Wrong mode.")
 end
 
@@ -135,6 +138,8 @@ end
 function WorldOfParkour:IsCourseBeingRun() return
     self:GetCourseCompletion() ~= 0 end
 
+function WorldOfParkour:IsCourseNotBeingRun() return not self:IsCourseBeingRun() end
+
 function WorldOfParkour:ResetCourseCompletion()
     if self:isNotActiveCourse() then NotInActiveModeError() end
 
@@ -173,6 +178,10 @@ end
 function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
     if self:isNotActiveCourse() then NotInActiveModeError() end
     if self:isNotInEditMode() then NotInEditModeError() end
+    if #self.activeCourseStore.activecourse.course >= 1000 then
+        -- Hard limit on course points, just in case.
+        error("Max point limit reached.")
+    end
 
     local nextAvailablePointIdxBeforeSync =
         #self.activeCourseStore.activecourse.course + 1
@@ -273,6 +282,21 @@ function WorldOfParkour:ReorderCourseWaypoints()
     self:ReloadActiveCourse()
 end
 
+function WorldOfParkour:InsertToSavedCourses(course)
+    course.compressedcoursedata = self:CompressCourseData(course)
+    table.insert(WorldOfParkour.savedCoursesStore.savedcourses, course)
+end
+
+function WorldOfParkour:ReplaceSavedCourse(course, courseKey, isCourseDiff)
+    if isCourseDiff or isCourseDiff == nil then
+        -- If course is different or if the diff was not provided.
+        -- Recompressed course data.
+        course.compressedcoursedata = self:CompressCourseData(course)
+    end
+    ReplaceTable(course,
+                 WorldOfParkour.savedCoursesStore.savedcourses[courseKey])
+end
+
 function WorldOfParkour:CreateWaypointDetails(idx)
     local mapID, x, y = TomTom:GetCurrentPlayerPosition()
     local opts = {
@@ -361,12 +385,13 @@ local function makeUniqueCourseTitle(defaultCourseTitle)
 end
 
 function WorldOfParkour:NewCourseDefaults()
-    -- While unique course names are not required, it makes readability easier.
     return {
+        -- While unique course titles are not required, it makes readability easier.
         title = makeUniqueCourseTitle("New Parkour Course"),
         description = "Description of course",
         id = UUID(),
-        course = {}
+        course = {},
+        compressedcoursedata = nil
     }
 end
 
