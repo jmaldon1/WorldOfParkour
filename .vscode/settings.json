@@ -1,2 +1,10 @@
 {
+  "Lua.diagnostics.globals": {
+    "items": {
+      "type": "string"
+    },
+    "markdownDescription": "Defined global variables. ",
+    "scope": "resource",
+    "type": "array"
+  }
 }

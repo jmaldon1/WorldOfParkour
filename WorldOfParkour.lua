@@ -39,6 +39,8 @@ function WorldOfParkour:OnInitialize()
     self.courseSearch = ""
     self.showCourseString = {}
     self.importCourseString = ""
+    self.github = "https://github.com/jmaldon1/WorldOfParkour"
+    self.githubIssues = "https://github.com/jmaldon1/WorldOfParkour/issues"
 
     -- self:RegisterEvent("OnHyperlinkShow", HandleChatLink)
 
