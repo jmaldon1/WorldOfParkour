@@ -53,4 +53,3 @@ end
 WorldOfParkour:RegisterChatCommand("wopsetpoint", setPointCmd)
 WorldOfParkour:RegisterChatCommand("wopsetpointafter", setPointAfterCmd)
 -- WorldOfParkour:RegisterChatCommand("reset", "ResetMemory")
--- WorldOfParkour:RegisterChatCommand("resetc", "ClearSavedCourses")

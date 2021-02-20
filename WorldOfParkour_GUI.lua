@@ -574,6 +574,9 @@ function ExitWithSave(info)
                           courseId)
     local backupActiveCourse = WorldOfParkour.activeCourseStore
                                    .backupActivecourse
+    -- Update the course string
+    activeCourse.compressedcoursedata = WorldOfParkour:CompressCourseData(activeCourse)
+
     local activeCourseCopyOne = Deepcopy(activeCourse)
     local activeCourseCopyTwo = Deepcopy(activeCourse)
 
@@ -593,6 +596,7 @@ local function setActiveCourse(info, action)
                           WorldOfParkour.savedCoursesStore.savedcourses,
                           courseId)
     local savedCourse = WorldOfParkour.savedCoursesStore.savedcourses[courseKey]
+
     -- We need to make copies here because Lua passes around tables as reference.
     -- We do not want to edit the original table.
     local savedCourseCopy = Deepcopy(savedCourse)

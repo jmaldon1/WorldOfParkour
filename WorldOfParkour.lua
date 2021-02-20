@@ -298,9 +298,10 @@ end
 function WorldOfParkour:ReplaceSavedCourse(course, courseKey, isCourseDiff)
     if isCourseDiff or isCourseDiff == nil then
         -- If course is different or if the diff was not provided.
-        -- Recompressed course data.
+        -- Recompress course data.
         course.compressedcoursedata = self:CompressCourseData(course)
     end
+
     ReplaceTable(course,
                  WorldOfParkour.savedCoursesStore.savedcourses[courseKey])
 end
@@ -419,18 +420,13 @@ function WorldOfParkour:RemoveAllTomTomWaypoints()
     end
 end
 
-function WorldOfParkour:ResetMemory()
-    if self:isActiveCourse() then self:RemoveAllTomTomWaypoints() end
-    self.activeCourseStore.activecourse.course = {}
-    self.activeCourseDB:ResetProfile()
-    self.activeCourseDB:ResetDB()
-    self.savedCoursesDB:ResetDB()
-end
-
-function WorldOfParkour:ClearSavedCourses()
-    self.savedCoursesStore.savedcourses = {}
-    self.GUIoptionsDB:ResetDB()
-end
+-- function WorldOfParkour:ResetMemory()
+--     if self:isActiveCourse() then self:RemoveAllTomTomWaypoints() end
+--     self.activeCourseStore.activecourse.course = {}
+--     self.activeCourseDB:ResetProfile()
+--     self.activeCourseDB:ResetDB()
+--     self.savedCoursesDB:ResetDB()
+-- end
 
 --[[-------------------------------------------------------------------
 --  Define utility functions
