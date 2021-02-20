@@ -50,7 +50,7 @@ function SetPoint(idx)
     end
 end
 
-WorldOfParkour:RegisterChatCommand("setpoint", setPointCmd)
-WorldOfParkour:RegisterChatCommand("setpointafter", setPointAfterCmd)
-WorldOfParkour:RegisterChatCommand("reset", "ResetMemory")
-WorldOfParkour:RegisterChatCommand("resetc", "ClearSavedCourses")
+WorldOfParkour:RegisterChatCommand("wopsetpoint", setPointCmd)
+WorldOfParkour:RegisterChatCommand("wopsetpointafter", setPointAfterCmd)
+-- WorldOfParkour:RegisterChatCommand("reset", "ResetMemory")
+-- WorldOfParkour:RegisterChatCommand("resetc", "ClearSavedCourses")

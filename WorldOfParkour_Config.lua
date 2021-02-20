@@ -78,12 +78,6 @@ local function createBlizzOptionsGUI()
                                        WorldOfParkour.activeCourseDB))
     AceConfigDialog:AddToBlizOptions("Active Course Profile",
                                      "Active Course Profiles", "WorldOfParkour")
-    -- Profile Options
-    AceConfig:RegisterOptionsTable("Saved Courses Profile",
-                                   AceDBOptions:GetOptionsTable(
-                                       WorldOfParkour.savedCoursesDB))
-    AceConfigDialog:AddToBlizOptions("Saved Courses Profile",
-                                     "Saved Courses Profiles", "WorldOfParkour")
 end
 
 function WorldOfParkour:CreateConfig() createBlizzOptionsGUI() end

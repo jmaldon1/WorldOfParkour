@@ -1,4 +1,5 @@
 -- Add standard addon support.
+local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 WorldOfParkour = LibStub("AceAddon-3.0"):NewAddon("WorldOfParkour",
                                                   "AceConsole-3.0",
@@ -13,19 +14,20 @@ function WorldOfParkour:OnInitialize()
             backupActivecourse = {}
         }
     }
-    self.savedcoursesDefaults = {global = {savedcourses = {}}}
+    self.savedcoursesDefaults = {
+        global = {savedcourses = {}, coursesBeingEdited = {}}
+    }
 
     self.activeCourseDB = LibStub("AceDB-3.0"):New("WoPActiveParkourCourseDB",
                                                    self.activeCourseDefaults)
     self.savedCoursesDB = LibStub("AceDB-3.0"):New("WoPSavedParkourCoursesDB",
                                                    self.savedcoursesDefaults)
 
-    -- self.activeCourseDB.RegisterCallback(self, "OnProfileChanged",
-    --                                      "ReloadActiveCourse")
-    -- self.activeCourseDB.RegisterCallback(self, "OnProfileCopied",
-    --                                      "ReloadActiveCourse")
-    -- self.activeCourseDB.RegisterCallback(self, "OnProfileReset",
-    --                                      "ReloadActiveCourse")
+    self.activeCourseDB.RegisterCallback(self, "OnProfileChanged",
+                                         "RefreshAddon")
+    self.activeCourseDB
+        .RegisterCallback(self, "OnProfileCopied", "RefreshAddon")
+    self.activeCourseDB.RegisterCallback(self, "OnProfileReset", "RefreshAddon")
 
     self.activeCourseStore = self.activeCourseDB.profile
     self.savedCoursesStore = self.savedCoursesDB.global
@@ -41,8 +43,6 @@ function WorldOfParkour:OnInitialize()
     self.importCourseString = ""
     self.github = "https://github.com/jmaldon1/WorldOfParkour"
     self.githubIssues = "https://github.com/jmaldon1/WorldOfParkour/issues"
-
-    -- self:RegisterEvent("OnHyperlinkShow", HandleChatLink)
 
     self:CreateGUI()
 end
@@ -75,6 +75,12 @@ end
 function NotInEditModeError()
     WorldOfParkour:Print("You must be in edit mode to perform this action.")
     error("Wrong mode.")
+end
+
+function WorldOfParkour:RefreshAddon()
+    -- TODO: Possibly do this without closing the window and just update the GUI.
+    AceConfigDialog:Close("WorldOfParkour")
+    WorldOfParkour:OnInitialize()
 end
 
 function WorldOfParkour:isActiveCourse()
@@ -321,7 +327,7 @@ function WorldOfParkour:ReloadActiveCourse()
     -- because the recovered uid's are now invalid.
     local updatedActiveCourseStore = {}
 
-    self:Printf("num points: %s", #self.activeCourseStore.activecourse.course)
+    -- self:Printf("num points: %s", #self.activeCourseStore.activecourse.course)
 
     -- Recreate the TomTom waypoints with our callbacks
     for _, coursePoint in pairs(self.activeCourseStore.activecourse.course) do

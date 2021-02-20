@@ -68,14 +68,36 @@ local function isCourseDifferent(courseA, courseB)
     return isCoursePointsDiff or isCourseDetailsDiff
 end
 
-local function enableEditMode()
+local function isCourseAlreadyBeingEdited(courseId)
+    if WorldOfParkour.savedCoursesStore.coursesBeingEdited[courseId] == nil then
+        return false
+    end
+    return true
+end
+
+local function enableEditMode(info)
+    local courseId = findCourseIdRecursive(info)
+    local coursesBeingEdited = WorldOfParkour.savedCoursesStore
+                                   .coursesBeingEdited
+    if isCourseAlreadyBeingEdited(courseId) then
+        local errMsg = string.format(
+                           "This course is already editing by '%s', you must exit editing mode on that character to edit this course.",
+                           coursesBeingEdited[courseId])
+        error(errMsg)
+    end
+
+    local myName, myServer = UnitFullName("player")
+    WorldOfParkour.savedCoursesStore.coursesBeingEdited[courseId] =
+        string.format("%s-%s", myName, myServer)
+
     -- Reset the course completion before editing.
     WorldOfParkour:ResetCourseCompletion()
     WorldOfParkour.activeCourseStore.isInEditMode = true
     SetCrazyArrowToFirstOrLastPoint("last")
 end
 
-local function disableEditMode()
+local function disableEditMode(courseId)
+    WorldOfParkour.savedCoursesStore.coursesBeingEdited[courseId] = nil
     WorldOfParkour.activeCourseStore.isInEditMode = false
     SetCrazyArrowToFirstOrLastPoint("first")
 end
@@ -147,7 +169,7 @@ local function unsetActiveCourse(info)
     -- Remove waypoints from screen.
     WorldOfParkour:RemoveAllTomTomWaypoints()
 
-    disableEditMode()
+    disableEditMode(courseId)
     disableActiveCourse()
 
     local isCourseDiff = isCourseDifferent(activeCourse, backupActiveCourse)
@@ -377,6 +399,17 @@ local function createActiveCourseGUI()
                 type = "group",
                 order = 1,
                 args = {
+                    header = {
+                        order = 1,
+                        type = "header",
+                        name = getCourseTitle,
+                    },
+                    description = {
+                        order = 2,
+                        type = "description",
+                        name = getCourseDescription
+                    },
+                    blank = {order = 3, type = "description", name = "\n\n"},
                     range = {
                         name = "Course Completion",
                         desc = "complete",
@@ -386,17 +419,17 @@ local function createActiveCourseGUI()
                         max = 1,
                         disabled = true,
                         isPercent = true,
-                        order = 1,
+                        order = 4,
                         get = Bind(WorldOfParkour, "GetCourseCompletion")
                     },
-                    blank = {order = 3, type = "description", name = "\n"},
+                    blank_ = {order = 5, type = "description", name = "\n"},
                     unsetactivecourse = {
                         name = "Unset Active Course",
                         desc = "Remove this course from Active Course." ..
                             "\n\nIf you edited this course, this will save your changes.",
                         type = "execute",
                         width = "full",
-                        order = 4,
+                        order = 6,
                         func = unsetActiveCourse
                     }
                 }
@@ -414,7 +447,7 @@ local function createActiveCourseGUI()
                             "If you would like to edit this course without losing your progress, make a copy and edit that.",
                         type = "execute",
                         disabled = Bind(WorldOfParkour, "isInEditMode"),
-                        width = 0.85,
+                        width = "full",
                         order = 1,
                         func = enableEditMode
                     },
@@ -425,6 +458,7 @@ local function createActiveCourseGUI()
                         desc = "Set the title of the course",
                         type = "input",
                         order = 3,
+                        width = "double",
                         disabled = Bind(WorldOfParkour, "isNotInEditMode"),
                         set = setEditableCourseTitle,
                         get = getEditableCourseTitle
@@ -529,7 +563,7 @@ function ExitWithoutSaving()
     WorldOfParkour:ReloadActiveCourse()
 
     -- Turn off editing mode.
-    disableEditMode()
+    disableEditMode(courseId)
 end
 
 function ExitWithSave(info)
@@ -550,7 +584,7 @@ function ExitWithSave(info)
     -- Update the backup
     ReplaceTable(activeCourseCopyTwo, backupActiveCourse)
 
-    disableEditMode()
+    disableEditMode(courseId)
 end
 
 local function setActiveCourse(info, action)
@@ -810,7 +844,6 @@ function WorldOfParkour:CreateGUI()
     AceConfig:RegisterOptionsTable("WorldOfParkour",
                                    self.GUIoptionsStore.options)
     AceConfigDialog:SetDefaultSize("WorldOfParkour", 800, 600)
-    -- AceConfigRegistry:RegisterCallback("ConfigTableChange", test)
     local f = function() AceConfigDialog:Open("WorldOfParkour") end
 
     -- Load last active course
