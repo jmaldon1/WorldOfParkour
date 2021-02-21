@@ -94,7 +94,8 @@ local dropdown_info = {
                 local activeCourse = WorldOfParkour.activeCourseStore
                                          .activecourse.course
                 local lastUid = activeCourse[lastIdx].uid
-                local m, x, y, options = WorldOfParkour:CreateTomTomWaypointArgs(lastUid)
+                local m, x, y, options =
+                    WorldOfParkour:CreateTomTomWaypointArgs(lastUid)
                 local newLastUid = TomTom:AddWaypoint(m, x, y, options)
                 -- Uncomplete the last point
                 WorldOfParkour.activeCourseStore.activecourse.course[lastIdx]
@@ -168,9 +169,7 @@ local function _both_clear_distance(event, uid, range, distance, lastdistance)
     local nextUncompletedPoint = WorldOfParkour:GetNextUncompletedPoint()
     if TomTom:GetKey(uid) ~= TomTom:GetKey(nextUncompletedPoint) then return end
     -- Only clear the waypoint if we weren't inside it when it was set
-    if lastdistance and not UnitOnTaxi("player") then
-        completePoint(uid)
-    end
+    if lastdistance and not UnitOnTaxi("player") then completePoint(uid) end
 end
 
 function WorldOfParkour:CreateTomTomCallbacks()
@@ -189,7 +188,9 @@ function WorldOfParkour:CreateTomTomCallbacks()
         },
         distance = {
             -- This table is indexed by distance, so the Key is the distance to clear the waypoint.
-            [self.clearDistance] = function(...) _both_clear_distance(...); end
+            [self.clearDistance] = function(...)
+                _both_clear_distance(...);
+            end
         }
     }
     return callbacks
