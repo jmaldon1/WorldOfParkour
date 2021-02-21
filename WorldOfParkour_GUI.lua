@@ -150,12 +150,28 @@ local function setEditableCourseDescription(info, description)
     WorldOfParkour.activeCourseStore.activecourse.description = description
 end
 
+local function setEditableCourseDifficulty(info, difficulty)
+    WorldOfParkour.activeCourseStore.activecourse.difficulty = difficulty
+end
+
+local function getEditableCourseDifficulty()
+    return WorldOfParkour.activeCourseStore.activecourse.difficulty
+end
+
 local function disableActiveCourseFromAllCourses(info)
     local courseId = findCourseIdRecursive(info)
     local activeCourse = WorldOfParkour.GUIoptionsStore.options.args
                              .activecourse.args[courseId]
     if activeCourse then return true end
     return false
+end
+
+local function updateCourse()
+    local activeCourse = WorldOfParkour.activeCourseStore.activecourse
+    -- Update the active course if things changed.
+    activeCourse.lastmodifieddate = date("%m/%d/%y %H:%M:%S")
+    activeCourse.compressedcoursedata =
+        WorldOfParkour:CompressCourseData(activeCourse)
 end
 
 local function unsetActiveCourse(info)
@@ -173,8 +189,11 @@ local function unsetActiveCourse(info)
     disableActiveCourse()
 
     local isCourseDiff = isCourseDifferent(activeCourse, backupActiveCourse)
+    if isCourseDiff then
+        updateCourse()
+    end
     -- Replace the old course with the active course.
-    WorldOfParkour:ReplaceSavedCourse(activeCourse, courseKey, isCourseDiff)
+    WorldOfParkour:ReplaceSavedCourse(activeCourse, courseKey)
 
     -- Clear some state
     WorldOfParkour.GUIoptionsStore.options.args.activecourse.args[courseId] =
@@ -384,7 +403,49 @@ local function disableUndo()
     local backupActiveCourse = WorldOfParkour.activeCourseStore
                                    .backupActivecourse
     local activeCourse = WorldOfParkour.activeCourseStore.activecourse
+    -- Disable if courses aren't different
     return not isCourseDifferent(activeCourse, backupActiveCourse)
+end
+
+local function getCourseDifficultyDisplay(info)
+    local courseId = findCourseIdRecursive(info)
+    local courseKey = FindSavedCourseKeyById(
+                          WorldOfParkour.savedCoursesStore.savedcourses,
+                          courseId)
+    local difficulty = WorldOfParkour.savedCoursesStore.savedcourses[courseKey]
+                           .difficulty
+    local colorMap = {
+        Easy = "\124cFF00FF00",
+        Medium = "\124cFFFFFF00",
+        Hard = "\124cFFFF0000"
+    }
+
+    return "Difficulty: " ..
+               string.format("%s%s\124r", colorMap[difficulty], difficulty)
+end
+
+local function getActiveCourseCompletion()
+    if WorldOfParkour:isNotActiveCourse() then NotInActiveModeError() end
+    local course = WorldOfParkour.activeCourseStore.activecourse.course
+    return WorldOfParkour:GetCourseCompletion(course)
+end
+
+local function isCourseCompletionResetDisabled()
+    local course = WorldOfParkour.activeCourseStore.activecourse.course
+    -- Disable if they aren't running the course.
+    return WorldOfParkour:IsCourseNotBeingRun(course)
+end
+
+local function getWoWPatch(info)
+    local courseId = findCourseIdRecursive(info)
+    local courseKey = FindSavedCourseKeyById(
+                          WorldOfParkour.savedCoursesStore.savedcourses,
+                          courseId)
+    local lastModifiedDate =
+        WorldOfParkour.savedCoursesStore.savedcourses[courseKey]
+            .lastmodifieddate
+    return string.format("\124cFFFFFF00Last modified date: %s\124r",
+                         lastModifiedDate)
 end
 
 local function createActiveCourseGUI()
@@ -399,17 +460,24 @@ local function createActiveCourseGUI()
                 type = "group",
                 order = 1,
                 args = {
-                    header = {
-                        order = 1,
-                        type = "header",
-                        name = getCourseTitle,
-                    },
-                    description = {
+                    header = {order = 1, type = "header", name = getCourseTitle},
+                    difficulty = {
                         order = 2,
+                        name = getCourseDifficultyDisplay,
+                        type = "description"
+                    },
+                    blank = {order = 3, type = "description", name = "\n"},
+                    description = {
+                        order = 4,
                         type = "description",
                         name = getCourseDescription
                     },
-                    blank = {order = 3, type = "description", name = "\n\n"},
+                    wowpatch = {
+                        order = 5,
+                        type = "description",
+                        name = getWoWPatch
+                    },
+                    blank_ = {order = 6, type = "description", name = "\n\n"},
                     range = {
                         name = "Course Completion",
                         desc = "complete",
@@ -419,17 +487,17 @@ local function createActiveCourseGUI()
                         max = 1,
                         disabled = true,
                         isPercent = true,
-                        order = 4,
-                        get = Bind(WorldOfParkour, "GetCourseCompletion")
+                        order = 7,
+                        get = getActiveCourseCompletion
                     },
-                    blank_ = {order = 5, type = "description", name = "\n"},
+                    blank__ = {order = 8, type = "description", name = "\n"},
                     unsetactivecourse = {
                         name = "Unset Active Course",
                         desc = "Remove this course from Active Course." ..
                             "\n\nIf you edited this course, this will save your changes.",
                         type = "execute",
                         width = "full",
-                        order = 6,
+                        order = 9,
                         func = unsetActiveCourse
                     }
                 }
@@ -475,11 +543,26 @@ local function createActiveCourseGUI()
                         set = setEditableCourseDescription,
                         get = getEditableCourseDescription
                     },
+                    difficulty = {
+                        name = "Difficulty",
+                        values = {
+                            Easy = "Easy",
+                            Medium = "Medium",
+                            Hard = "Hard"
+                        },
+                        sorting = {"Easy", "Medium", "Hard"},
+                        desc = "Set the course difficulty level.",
+                        type = "select",
+                        order = 6,
+                        disabled = Bind(WorldOfParkour, "isNotInEditMode"),
+                        set = setEditableCourseDifficulty,
+                        get = getEditableCourseDifficulty
+                    },
                     pointslist = {
                         name = "Course Points",
                         type = "group",
                         disabled = Bind(WorldOfParkour, "isNotInEditMode"),
-                        order = 6,
+                        order = 7,
                         args = CreatePointsListGUI()
                     }
                 }
@@ -520,7 +603,7 @@ local function createActiveCourseGUI()
                         width = "double",
                         confirm = true,
                         confirmText = "Are you sure you want to reset the course completion?",
-                        disabled = Bind(WorldOfParkour, "IsCourseNotBeingRun"),
+                        disabled = isCourseCompletionResetDisabled,
                         order = 5,
                         func = Bind(WorldOfParkour, "ResetCourseCompletion")
                     }
@@ -574,16 +657,16 @@ function ExitWithSave(info)
                           courseId)
     local backupActiveCourse = WorldOfParkour.activeCourseStore
                                    .backupActivecourse
-    -- Update the course string
-    activeCourse.compressedcoursedata = WorldOfParkour:CompressCourseData(activeCourse)
+    local isCourseDiff = isCourseDifferent(activeCourse, backupActiveCourse)
+    if isCourseDiff then
+        updateCourse()
+    end
 
     local activeCourseCopyOne = Deepcopy(activeCourse)
     local activeCourseCopyTwo = Deepcopy(activeCourse)
 
-    local isCourseDiff = isCourseDifferent(activeCourse, backupActiveCourse)
     -- Replace the old course with the active course.
-    WorldOfParkour:ReplaceSavedCourse(activeCourseCopyOne, courseKey,
-                                      isCourseDiff)
+    WorldOfParkour:ReplaceSavedCourse(activeCourseCopyOne, courseKey)
     -- Update the backup
     ReplaceTable(activeCourseCopyTwo, backupActiveCourse)
 
@@ -656,6 +739,16 @@ local function displayCourseString(info)
     return not WorldOfParkour.showCourseString[courseId]
 end
 
+local function getSavedCourseCompletion(info)
+    local courseId = findCourseIdRecursive(info)
+    local courseKey = FindSavedCourseKeyById(
+                          WorldOfParkour.savedCoursesStore.savedcourses,
+                          courseId)
+    local course = WorldOfParkour.savedCoursesStore.savedcourses[courseKey]
+                       .course
+    return WorldOfParkour:GetCourseCompletion(course)
+end
+
 local function createSavedCourseGUI()
     return {
         name = getCourseTitle,
@@ -665,12 +758,33 @@ local function createSavedCourseGUI()
         disabled = disableActiveCourseFromAllCourses,
         args = {
             titleheader = {name = getCourseTitle, type = "header", order = 1},
+            difficulty = {
+                order = 2,
+                name = getCourseDifficultyDisplay,
+                type = "description"
+            },
+            blank = {order = 3, type = "description", name = "\n"},
             description = {
                 name = getCourseDescription,
                 type = "description",
-                order = 2
+                order = 4
             },
-            blank_ = {order = 3, type = "description", name = "\n\n"},
+            wowpatch = {order = 5, type = "description", name = getWoWPatch},
+            blank_ = {order = 6, type = "description", name = "\n\n"},
+            range = {
+                name = "Course Completion",
+                desc = "complete",
+                type = "range",
+                width = "full",
+                min = 0,
+                max = 1,
+                disabled = true,
+                isPercent = true,
+                order = 7,
+                get = getSavedCourseCompletion
+            },
+            blank__ = {order = 8, type = "description", name = "\n\n"},
+            options = {name = "Options", type = "header", order = 9},
             setactivecourse = {
                 name = "Set As Active Course",
                 desc = "Edit the course",
@@ -678,18 +792,18 @@ local function createSavedCourseGUI()
                 width = "full",
                 disabled = Bind(WorldOfParkour, "isActiveCourse"),
                 func = setActiveCourse,
-                order = 4
+                order = 10
             },
-            blank__ = {order = 5, type = "description", name = "\n"},
+            blank___ = {order = 11, type = "description", name = "\n"},
             copycourse = {
                 name = "Copy Course",
                 desc = "Create a copy of this course",
                 type = "execute",
                 func = CopyCourse,
                 width = "full",
-                order = 6
+                order = 12
             },
-            blank___ = {order = 7, type = "description", name = "\n\n"},
+            blank____ = {order = 13, type = "description", name = "\n\n"},
             removecourse = {
                 name = "Remove Course",
                 desc = "Permanently delete this course",
@@ -698,9 +812,9 @@ local function createSavedCourseGUI()
                 type = "execute",
                 func = removeCourse,
                 width = "full",
-                order = 8
+                order = 14
             },
-            blank____ = {order = 9, type = "description", name = "\n\n"},
+            blank_____ = {order = 15, type = "description", name = "\n\n"},
             showcoursestring = {
                 name = "Show sharable course string",
                 -- desc = "Create a copy of this course",
@@ -708,7 +822,7 @@ local function createSavedCourseGUI()
                 set = setToggleCourseString,
                 get = getToggleCourseString,
                 width = "double",
-                order = 10
+                order = 16
             },
             createcoursestring = {
                 name = "Sharable Course String",
@@ -717,7 +831,7 @@ local function createSavedCourseGUI()
                 hidden = displayCourseString,
                 multiline = true,
                 width = "full",
-                order = 11,
+                order = 17,
                 get = getSharableString
             }
         }
@@ -735,7 +849,11 @@ function CopyCourse(info)
     -- New UUID because we just made a copy of an existing course.
     local uuid = UUID()
     savedCourseCopy.id = uuid
+    -- New title
     savedCourseCopy.title = savedCourseCopy.title .. " Copy"
+    -- New WoW patch
+    savedCourseCopy.wowpatch = select(4, GetBuildInfo())
+    -- Insert
     WorldOfParkour:InsertToSavedCourses(savedCourseCopy)
     -- Add course to GUI
     WorldOfParkour.GUIoptionsStore.options.args.courselist.args[uuid] =

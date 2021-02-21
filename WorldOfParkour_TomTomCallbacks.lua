@@ -4,6 +4,24 @@
 local dropdown = CreateFrame("Frame", "TomTomDropdown", nil,
                              "UIDropDownMenuTemplate")
 
+local function completePoint(uid)
+    -- local nextUncompletedPoint = WorldOfParkour:GetNextUncompletedPoint()
+    local idx = GetCoursePointIndex(uid)
+    local activeCourse = WorldOfParkour.activeCourseStore.activecourse.course
+    activeCourse[idx].completed = true
+    -- Check if the user is at the last point in the course.
+    if idx ~= #activeCourse then
+        -- Set crazy arrow to the next point in the course.
+        local nextUid = activeCourse[idx + 1].uid
+        -- local nextUid = nextUncompletedPoint.uid
+        TomTom:SetCrazyArrow(nextUid, WorldOfParkour.arrivalDistance,
+                             nextUid.title)
+    end
+    TomTom:RemoveWaypoint(uid)
+    -- Notify that a point as been completed
+    AceConfigRegistry:NotifyChange("WorldOfParkour")
+end
+
 local dropdown_info = {
     -- Define level one elements here
     [1] = {
@@ -19,7 +37,7 @@ local dropdown_info = {
                 end
                 local uid = dropdown.uid
                 local data = uid
-                TomTom:SetCrazyArrow(uid, TomTom.profile.arrow.arrival,
+                TomTom:SetCrazyArrow(uid, WorldOfParkour.arrivalDistance,
                                      data.title or "TomTom waypoint")
             end
         }, { -- Remove waypoint
@@ -34,12 +52,63 @@ local dropdown_info = {
 
                 -- TomTom:Printf("Removing waypoint %0.2f, %0.2f in %s", data.x, data.y, data.zone)
             end
+        },
+        { -- Complete point, can be used if TomTom is being weird and not clearing the waypoint automatically.
+            text = "Complete point",
+            func = function()
+                -- Don't clear if we are in edit mode.
+                if WorldOfParkour:isInEditMode() then return end
+
+                local uid = dropdown.uid
+                -- Dont clear if it is not the next waypoint.
+                local nextUncompletedPoint =
+                    WorldOfParkour:GetNextUncompletedPoint()
+                if TomTom:GetKey(uid) ~= TomTom:GetKey(nextUncompletedPoint) then
+                    error("Complete the previous points first.")
+                end
+
+                if TomTom:GetDistanceToWaypoint(uid) >
+                    WorldOfParkour.arrivalDistance then
+                    error("You need to be closer to complete this point.")
+                end
+                completePoint(uid)
+            end
+        },
+        { -- Add previous point, can be used if the user needs to recomplete the previous point for any reason.
+            text = "Show previous point",
+            func = function()
+                -- Don't clear if we are in edit mode.
+                if WorldOfParkour:isInEditMode() then return end
+                local uid = dropdown.uid
+                local nextUncompletedPoint =
+                    WorldOfParkour:GetNextUncompletedPoint()
+                if TomTom:GetKey(uid) ~= TomTom:GetKey(nextUncompletedPoint) then
+                    error("The previous point is already shown.")
+                end
+
+                local idx = GetCoursePointIndex(uid)
+                local lastIdx = idx - 1
+                if lastIdx == 0 then
+                    error("You are already at the first point!")
+                end
+                local activeCourse = WorldOfParkour.activeCourseStore
+                                         .activecourse.course
+                local lastUid = activeCourse[lastIdx].uid
+                local m, x, y, options = WorldOfParkour:CreateTomTomWaypointArgs(lastUid)
+                local newLastUid = TomTom:AddWaypoint(m, x, y, options)
+                -- Uncomplete the last point
+                WorldOfParkour.activeCourseStore.activecourse.course[lastIdx]
+                    .completed = false
+                TomTom:SetCrazyArrow(newLastUid, WorldOfParkour.arrivalDistance,
+                                     newLastUid.title)
+                AceConfigRegistry:NotifyChange("WorldOfParkour")
+            end
         }, { -- Show hint
             text = "Show hint",
             func = function()
                 local uid = dropdown.uid
                 local title = uid.title
-                local idx = GetCourseIndex(uid)
+                local idx = GetCoursePointIndex(uid)
                 local coursePoint = WorldOfParkour.activeCourseStore
                                         .activecourse.course[idx]
                 WorldOfParkour:Printf("Hint for %s: %s", title, coursePoint.hint)
@@ -95,29 +164,12 @@ end
 local function _both_clear_distance(event, uid, range, distance, lastdistance)
     -- Don't clear if we are in edit mode.
     if WorldOfParkour:isInEditMode() then return end
-
     -- Dont clear if it is not the next waypoint.
     local nextUncompletedPoint = WorldOfParkour:GetNextUncompletedPoint()
-    if TomTom:GetKey(uid) ~= TomTom:GetKey(nextUncompletedPoint) then
-        return
-    end
-
+    if TomTom:GetKey(uid) ~= TomTom:GetKey(nextUncompletedPoint) then return end
     -- Only clear the waypoint if we weren't inside it when it was set
     if lastdistance and not UnitOnTaxi("player") then
-        local idx = GetCourseIndex(uid)
-        local activeCourse = WorldOfParkour.activeCourseStore.activecourse
-                                 .course
-        activeCourse[idx].completed = true
-        -- Check if the user is at the last point in the course.
-        if idx ~= #activeCourse then
-            -- Set crazy arrow to the next point in the course.
-            local nextUid = activeCourse[idx + 1].uid
-            TomTom:SetCrazyArrow(nextUid, TomTom.profile.arrow.arrival,
-                                 nextUid.title)
-        end
-        TomTom:RemoveWaypoint(uid)
-        -- Notify that a point as been completed
-        AceConfigRegistry:NotifyChange("WorldOfParkour")
+        completePoint(uid)
     end
 end
 
@@ -137,7 +189,7 @@ function WorldOfParkour:CreateTomTomCallbacks()
         },
         distance = {
             -- This table is indexed by distance, so the Key is the distance to clear the waypoint.
-            [3] = function(...) _both_clear_distance(...); end
+            [self.clearDistance] = function(...) _both_clear_distance(...); end
         }
     }
     return callbacks

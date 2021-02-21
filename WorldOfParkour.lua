@@ -37,7 +37,8 @@ function WorldOfParkour:OnInitialize()
                                                  self.GUIoptionsDefaults)
     self.GUIoptionsStore = self.GUIoptionsDB.profile
 
-    self.arrivalDistance = 5
+    self.arrivalDistance = 2
+    self.clearDistance = 3
     self.courseSearch = ""
     self.showCourseString = {}
     self.importCourseString = ""
@@ -143,10 +144,10 @@ function WorldOfParkour:CheckIfPointExists(uid)
     return false
 end
 
-function WorldOfParkour:IsCourseBeingRun() return
-    self:GetCourseCompletion() ~= 0 end
+function WorldOfParkour:IsCourseBeingRun(course) return
+    self:GetCourseCompletion(course) ~= 0 end
 
-function WorldOfParkour:IsCourseNotBeingRun() return not self:IsCourseBeingRun() end
+function WorldOfParkour:IsCourseNotBeingRun(course) return not self:IsCourseBeingRun(course) end
 
 function WorldOfParkour:ResetCourseCompletion()
     if self:isNotActiveCourse() then NotInActiveModeError() end
@@ -158,9 +159,7 @@ function WorldOfParkour:ResetCourseCompletion()
     self:ReloadActiveCourse()
 end
 
-function WorldOfParkour:GetCourseCompletion()
-    if self:isNotActiveCourse() then NotInActiveModeError() end
-    local course = self.activeCourseStore.activecourse.course
+function WorldOfParkour:GetCourseCompletion(course)
     if #course == 0 then return 0 end
 
     local isCompleted = function(coursePoint)
@@ -239,7 +238,7 @@ function WorldOfParkour:RemoveWaypointAndReorder(uid)
     if type(uid) ~= "table" then
         error("RemoveWaypoint(uid) UID is not a table.");
     end
-    local idx = GetCourseIndex(uid)
+    local idx = GetCoursePointIndex(uid)
     self:RemoveWaypoint(uid)
 
     -- Do not reorder if user removed last point.
@@ -265,7 +264,7 @@ function WorldOfParkour:RemoveWaypoint(uid)
     if self:isNotActiveCourse() then NotInActiveModeError() end
     if self:isNotInEditMode() then NotInEditModeError() end
 
-    local idx = GetCourseIndex(uid)
+    local idx = GetCoursePointIndex(uid)
     table.remove(self.activeCourseStore.activecourse.course, idx)
     TomTom:RemoveWaypoint(uid)
 end
@@ -277,7 +276,7 @@ function WorldOfParkour:ReorderCourseWaypoints()
 
     for idx, coursePoint in ipairs(self.activeCourseStore.activecourse.course) do
         local uid = coursePoint.uid
-        local oldIdx = GetCourseIndex(uid)
+        local oldIdx = GetCoursePointIndex(uid)
         if idx ~= oldIdx then
             -- Rename the waypoint
             uid.title = "Point " .. idx
@@ -295,13 +294,7 @@ function WorldOfParkour:InsertToSavedCourses(course)
     table.insert(WorldOfParkour.savedCoursesStore.savedcourses, course)
 end
 
-function WorldOfParkour:ReplaceSavedCourse(course, courseKey, isCourseDiff)
-    if isCourseDiff or isCourseDiff == nil then
-        -- If course is different or if the diff was not provided.
-        -- Recompress course data.
-        course.compressedcoursedata = self:CompressCourseData(course)
-    end
-
+function WorldOfParkour:ReplaceSavedCourse(course, courseKey)
     ReplaceTable(course,
                  WorldOfParkour.savedCoursesStore.savedcourses[courseKey])
 end
@@ -321,6 +314,24 @@ function WorldOfParkour:CreateWaypointDetails(idx)
     return {mapID, x, y, opts}
 end
 
+function WorldOfParkour:CreateTomTomWaypointArgs(uid)
+    local m, x, y = unpack(uid)
+
+    -- Set up default options
+    local options = {callbacks = WorldOfParkour:CreateTomTomCallbacks()}
+
+    -- Recover details from saved waypoints
+    for k, v in pairs(uid) do
+        if type(k) == "string" then
+            if k ~= "callbacks" then
+                -- callbacks cannot be recovered
+                options[k] = v
+            end
+        end
+    end
+    return m, x, y, options
+end
+
 function WorldOfParkour:ReloadActiveCourse()
     if self:isNotActiveCourse() then NotInActiveModeError() end
     -- Recover our last active parkour course.
@@ -333,20 +344,7 @@ function WorldOfParkour:ReloadActiveCourse()
     -- Recreate the TomTom waypoints with our callbacks
     for _, coursePoint in pairs(self.activeCourseStore.activecourse.course) do
         local uid = coursePoint.uid
-        local m, x, y = unpack(uid)
-
-        -- Set up default options
-        local options = {callbacks = self:CreateTomTomCallbacks()}
-
-        -- Recover details from saved waypoints
-        for k, v in pairs(uid) do
-            if type(k) == "string" then
-                if k ~= "callbacks" then
-                    -- we can never import callbacks, so ditch them
-                    options[k] = v
-                end
-            end
-        end
+        local m, x, y, options = self:CreateTomTomWaypointArgs(uid)
 
         local isSuccess, results = pcall(Bind(TomTom, "AddWaypoint"), m, x, y,
                                          options)
@@ -401,11 +399,13 @@ end
 
 function WorldOfParkour:NewCourseDefaults()
     return {
-        -- While unique course titles are not required, it makes readability easier.
+        -- While unique course titles are not required, but it makes readability easier.
         title = makeUniqueCourseTitle("New Parkour Course"),
         description = "Description of course",
         id = UUID(),
         course = {},
+        difficulty = "Easy",
+        lastmodifieddate = date("%m/%d/%y %H:%M:%S"),
         compressedcoursedata = ""
     }
 end
@@ -432,7 +432,7 @@ end
 --  Define utility functions
 -------------------------------------------------------------------]] --
 
-function GetCourseIndex(uid) return tonumber(Split(uid.title, " ")[2]) end
+function GetCoursePointIndex(uid) return tonumber(Split(uid.title, " ")[2]) end
 
 function UUID()
     local template = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
