@@ -15,3 +15,7 @@ externals:
     WorldOfParkour/libs/LibSerialize:
         url: https://github.com/rossnichols/LibSerialize
         tag: latest
+
+ignore:
+    media
+    README.md
