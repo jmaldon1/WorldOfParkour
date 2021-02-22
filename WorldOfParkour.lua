@@ -219,6 +219,10 @@ function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
 
     -- Create the waypoint
     local mapID, x, y, opts = unpack(self:CreateWaypointDetails(idx))
+    if TomTom:WaypointExists(mapID, x, y, opts.title) then
+        error("This point already exists, try moving from this spot.")
+    end
+
     local uid = TomTom:AddWaypoint(mapID, x, y, opts)
 
     -- Do nothing if the point already exists in our Store.
