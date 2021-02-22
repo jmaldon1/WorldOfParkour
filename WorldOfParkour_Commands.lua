@@ -11,7 +11,7 @@ local function setPointCmd(args)
                     " is not a number.")
     end
 
-    SetPoint(idx)
+    SetPoint(tonumber(idx))
     -- Notify changes to GUI
     AceConfigRegistry:NotifyChange("WorldOfParkour")
 end
