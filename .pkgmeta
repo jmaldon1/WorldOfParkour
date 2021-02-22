@@ -22,3 +22,6 @@ ignore:
 
 required-dependencies:
   - TomTom
+
+move-folders:
+  WorldOfParkour/WorldOfParkour: WorldOfParkour
