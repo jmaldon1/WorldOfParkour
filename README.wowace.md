@@ -25,7 +25,8 @@ World of Warcraft addon: Parkour puzzles throughout the world.
 * Uses TomTom waypoints to easily show the course points.
 
 # Known Issues
-1. **DO NOT right-click the Crazy Waypoint Arrow that TomTom provides and using any of those options.** It can easily bug out your course run or creation.
+
+1. **DO NOT right-click the Crazy Waypoint Arrow that TomTom provides and use any of those options.** It can easily bug out your course run or creation.
 2. TomTom seems to not always want to clear points even when you are standing on them. So if this occurs, just right click the point on the minimap and press `Complete point` to manually complete it.
 
 
