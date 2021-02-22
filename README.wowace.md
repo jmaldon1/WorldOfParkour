@@ -90,7 +90,7 @@ Below is a short gif creating a simple parkour course.
 
 # Tips & Tricks
 
-1. Create a macro with `/wopsetpoint` and add it to your action bar to quickly add points to a course without opening the WorldOfParkour UI _(NOTE: You need to be editing the course for the `/wopsetpoint` to work.)_.
+1. Create a macro with `/wopsetpoint` and add it to your action bar to quickly add points to a course without opening the WorldOfParkour UI _(NOTE: You need to be editing the course for `/wopsetpoint` to work.)_.
 2. Hints for each point can be seen by right clicking the minimap point icon and clicking `Show hint`.
    
 # Useful links
