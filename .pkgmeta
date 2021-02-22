@@ -23,6 +23,7 @@ externals:
 ignore:
     - media
     - README.md
+    - generate_changelog.sh
 
 required-dependencies:
   - TomTom
