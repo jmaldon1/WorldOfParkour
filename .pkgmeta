@@ -25,6 +25,10 @@ ignore:
     - README.md
     - generate_changelog.sh
 
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+
 required-dependencies:
   - TomTom
 

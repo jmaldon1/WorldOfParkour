@@ -10,6 +10,9 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
+      - name: Generate Changelog
+        run: ./generate_changelog.sh
+
       - name: Create Retail Package
         uses: BigWigsMods/packager@master
         env:
