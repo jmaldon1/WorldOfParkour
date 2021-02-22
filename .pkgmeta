@@ -21,6 +21,7 @@ externals:
 ignore:
     - media
     - README.md
+    - README.wowace.md
     - generate_changelog.sh
 
 manual-changelog:
