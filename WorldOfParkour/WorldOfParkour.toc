@@ -1,12 +1,12 @@
 ## Interface: 90002
 ## Title: WorldOfParkour
 ## Dependencies: TomTom
-## Notes: Shows a message of "Hello, World!" on screen.
+## Notes: Create parkour courses throughout the world.
 ## Author: Josh
 ## SavedVariables: WoPActiveParkourCourseDB, WoPSavedParkourCoursesDB, WoPGUIDB
 ## Version: 0.0.1
 
-# Lib
+# external libs
 libs\LibStub\LibStub.lua
 libs\LibDeflate\LibDeflate.lua
 libs\libSerialize\LibSerialize.lua
