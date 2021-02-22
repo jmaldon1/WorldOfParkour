@@ -3,10 +3,12 @@ World of Warcraft addon: Parkour puzzles throughout the world.
 
 - [WorldofParkour](#worldofparkour)
 - [Features](#features)
+- [Known Issues](#known-issues)
 - [Quick Start](#quick-start)
+- [How to Run a Course](#how-to-run-a-course)
 - [Course Creation](#course-creation)
 - [Course Sharing](#course-sharing)
-- [Available Commands](#available-commands)
+- [Commands](#commands)
 - [Tips & Tricks](#tips--tricks)
 - [Useful links](#useful-links)
 
@@ -16,9 +18,18 @@ World of Warcraft addon: Parkour puzzles throughout the world.
 * Share courses with friends.
 * Uses TomTom waypoints to easily show the course points.
 
+# Known Issues
+1. **DO NOT right-click the Crazy Waypoint Arrow that TomTom provides and using any of those options.** It can easily bug out your course run or creation.
+2. TomTom seems to not always want to clear points even when you are standing on them. So if this occurs, just right click the point on the minimap and press `Complete point` to manually complete it.
+
+
 # Quick Start
 
-To open WorldofParkour, type `/wop` or `/parkour` into your chat and hit enter.
+To open WorldOfParkour, type `/wop` or `/parkour` into your chat and hit enter.
+
+# How to Run a Course
+
+Simply pick a course from the `All Courses` tab and set it as the `Active Course`.
 
 # Course Creation
 
@@ -28,7 +39,7 @@ Below is a short gif creating a simple parkour course.
 
 # Course Sharing
 
-1. Sharing Course
+1. Sharing a Course
 
     Press the `Show sharable course string` toggle. Copy and paste the string to your friends.
 
@@ -41,7 +52,7 @@ Below is a short gif creating a simple parkour course.
     ![course import](./media/import_course_share.png "Course Import")
 
 
-# Available Commands
+# Commands
 
 1. `/wopsetpoint`: Set the next point for the course. Equivalent to pressing `Add Point` in the UI.
    1. Example:
@@ -68,6 +79,7 @@ Below is a short gif creating a simple parkour course.
 # Tips & Tricks
 
 1. Create a macro with `/wopsetpoint` and add it to your action bar to quickly add points to a course without opening the WorldOfParkour UI _(NOTE: You need to be editing the course for the `/wopsetpoint` to work.)_.
+2. Hints for each point can be seen by right clicking the minimap point icon and clicking `Show hint`.
    
 # Useful links
 
