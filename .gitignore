@@ -1,5 +1,5 @@
 # external libs
-WorldOfParkour/libs
+libs/
 
 # Compiled Lua sources
 luac.out

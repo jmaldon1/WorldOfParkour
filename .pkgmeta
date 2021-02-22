@@ -1,5 +1,3 @@
-package-as: WorldOfParkour
-
 externals:
     WorldOfParkour/libs/LibStub: 
         url: https://repos.wowace.com/wow/libstub/trunk
@@ -31,6 +29,3 @@ manual-changelog:
 
 required-dependencies:
   - TomTom
-
-move-folders:
-  WorldOfParkour/WorldOfParkour: WorldOfParkour

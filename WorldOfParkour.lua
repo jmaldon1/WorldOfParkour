@@ -56,8 +56,13 @@ function WorldOfParkour:OnEnable()
     if self:isActiveCourse() then self:ReloadActiveCourse() end
 end
 
+local function showError(msg)
+    local err = "\124cFFFF0000Error: \124r"
+    WorldOfParkour:Print(err .. msg)
+end
+
 -- Wow error handler
-seterrorhandler(print);
+seterrorhandler(showError);
 
 local function WoPMessage(msg)
     -- Create string with addon name appended.
@@ -68,14 +73,11 @@ end
 --  WorldOfParkour
 -------------------------------------------------------------------]] --
 function NotInActiveModeError()
-    WorldOfParkour:Print(
-        "You must have an Active Course to perform this action.")
-    error("Wrong mode.")
+    error("You must have an Active Course to perform this action.")
 end
 
 function NotInEditModeError()
-    WorldOfParkour:Print("You must be in edit mode to perform this action.")
-    error("Wrong mode.")
+    error("You must be in edit mode to perform this action.")
 end
 
 function WorldOfParkour:RefreshAddon()
@@ -144,10 +146,13 @@ function WorldOfParkour:CheckIfPointExists(uid)
     return false
 end
 
-function WorldOfParkour:IsCourseBeingRun(course) return
-    self:GetCourseCompletion(course) ~= 0 end
+function WorldOfParkour:IsCourseBeingRun(course)
+    return self:GetCourseCompletion(course) ~= 0
+end
 
-function WorldOfParkour:IsCourseNotBeingRun(course) return not self:IsCourseBeingRun(course) end
+function WorldOfParkour:IsCourseNotBeingRun(course)
+    return not self:IsCourseBeingRun(course)
+end
 
 function WorldOfParkour:ResetCourseCompletion()
     if self:isNotActiveCourse() then NotInActiveModeError() end
