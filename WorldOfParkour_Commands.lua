@@ -1,17 +1,9 @@
 --[[-------------------------------------------------------------------
 --  Define Slash commands
 -------------------------------------------------------------------]] --
-local function setPointCmd(args)
+local function setPointCmd()
     if WorldOfParkour:isNotActiveCourse() then NotInActiveModeError() end
-    local idx = WorldOfParkour:GetArgs(args, 1)
-
-    -- Input must be nil or a number
-    if idx ~= nil and not tonumber(idx) then
-        error("Input to /setpoint must be a number. " .. "'" .. idx .. "'" ..
-                    " is not a number.")
-    end
-
-    SetPoint(tonumber(idx))
+    SetPoint()
     -- Notify changes to GUI
     AceConfigRegistry:NotifyChange("WorldOfParkour")
 end

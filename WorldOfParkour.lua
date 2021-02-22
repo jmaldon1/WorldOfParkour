@@ -208,7 +208,7 @@ function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
         #self.activeCourseStore.activecourse.course + 1
 
     if type(idx) ~= "number" then
-        error("SetWaypointAtIndexOnCurrentPosition(idx) idx is not a number.");
+        error("SetWaypointAtIndexOnCurrentPosition(idx): idx is not a number.");
     end
 
     if idx <= 0 or idx > nextAvailablePointIdxAfterSync then
