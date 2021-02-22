@@ -1,6 +1,8 @@
 # WorldofParkour
 World of Warcraft addon: Parkour puzzles throughout the world.
 
+# Table of Contents
+
 - [WorldofParkour](#worldofparkour)
 - [Features](#features)
 - [Known Issues](#known-issues)
