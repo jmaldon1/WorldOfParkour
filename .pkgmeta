@@ -17,5 +17,8 @@ externals:
         tag: latest
 
 ignore:
-    media
-    README.md
+    - media
+    - README.md
+
+required-dependencies:
+  - TomTom
