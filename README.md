@@ -4,6 +4,7 @@ World of Warcraft addon: Parkour puzzles throughout the world.
 # Table of Contents
 
 - [WorldofParkour](#worldofparkour)
+- [Table of Contents](#table-of-contents)
 - [Features](#features)
 - [Known Issues](#known-issues)
 - [Quick Start](#quick-start)
@@ -58,6 +59,7 @@ Below is a short gif creating a simple parkour course.
 
 1. `/wopsetpoint`: Set the next point for the course. Equivalent to pressing `Add Point` in the UI.
    1. Example:
+
    ```
     Points: [1, 2, 3, 4, 5]
     /wopsetpoint
@@ -65,6 +67,7 @@ Below is a short gif creating a simple parkour course.
                             ^
                             This is the new point.
    ```
+
 2. `/wopsetpointafter`: Set a point after another existing point in the course. Equivalent to pressing `Add point after` or `Add point to beginning` in the UI. 
    1. `args`
       1. `Index[number]`: Index of the point to add another point after.
@@ -80,7 +83,7 @@ Below is a short gif creating a simple parkour course.
 
 # Tips & Tricks
 
-1. Create a macro with `/wopsetpoint` and add it to your action bar to quickly add points to a course without opening the WorldOfParkour UI _(NOTE: You need to be editing the course for the `/wopsetpoint` to work.)_.
+1. Create a macro with `/wopsetpoint` and add it to your action bar to quickly add points to a course without opening the WorldOfParkour UI _(NOTE: You need to be editing the course for `/wopsetpoint` to work.)_.
 2. Hints for each point can be seen by right clicking the minimap point icon and clicking `Show hint`.
    
 # Useful links
