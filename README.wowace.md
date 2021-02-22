@@ -1,4 +1,4 @@
-# [Please visit Github to see more well formatted instructions.](https://github.com/jmaldon1/WorldOfParkour)
+# [Please visit Github to see more well formatted instructions.](https://github.com/jmaldon1/WorldOfParkour#worldofparkour)
 
 # WorldofParkour
 World of Warcraft addon: Parkour puzzles throughout the world.
