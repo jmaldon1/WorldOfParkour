@@ -1,6 +1,9 @@
 # external libs
 libs/
 
+# Release script
+.release/
+
 # Compiled Lua sources
 luac.out
 
