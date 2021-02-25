@@ -8,7 +8,7 @@ function WorldOfParkour:OnInitialize()
     self.activeCourseDefaults = {
         profile = {isInEditMode = false, isActiveCourse = false, activecourse = {}, backupActivecourse = {}}
     }
-    self.savedcoursesDefaults = {global = {savedcourses = {}, coursesBeingEdited = {}}}
+    self.savedcoursesDefaults = {global = {savedcourses = {}}}
 
     self.activeCourseDB = LibStub("AceDB-3.0"):New("WoPActiveParkourCourseDB", self.activeCourseDefaults)
     self.savedCoursesDB = LibStub("AceDB-3.0"):New("WoPSavedParkourCoursesDB", self.savedcoursesDefaults)
@@ -135,14 +135,10 @@ function WorldOfParkour:IsCourseBeingRun(course) return self:GetCourseCompletion
 function WorldOfParkour:IsCourseNotBeingRun(course) return not self:IsCourseBeingRun(course) end
 
 function WorldOfParkour:ResetCourseCompletion(courseDetails, isActiveCourse)
-    courseDetails.iscomplete = false
-    for _, coursePoint in pairs(courseDetails.course) do
-        coursePoint.completed = false
-    end
+    courseDetails.metadata.isComplete = false
+    for _, coursePoint in pairs(courseDetails.course) do coursePoint.completed = false end
 
-    if isActiveCourse then
-        self:ReloadActiveCourse()
-    end
+    if isActiveCourse then self:ReloadActiveCourse() end
 end
 
 function WorldOfParkour:GetCourseCompletion(course)
@@ -368,6 +364,16 @@ local function makeUniqueCourseTitle(defaultCourseTitle)
     return string.format(name, i)
 end
 
+function WorldOfParkour:CreateNewCourseMetadata()
+    return {
+        isComplete = false,
+        -- Only one character can edit a course a time.
+        characterEditingCourse = "",
+        -- Multiple characters can have a course as active.
+        charactersWithCourseAsActive = {}
+    }
+end
+
 function WorldOfParkour:NewCourseDefaults()
     return {
         -- While unique course titles are not required, but it makes readability easier.
@@ -378,7 +384,8 @@ function WorldOfParkour:NewCourseDefaults()
         difficulty = "Easy",
         lastmodifieddate = date("%m/%d/%y %H:%M:%S"),
         compressedcoursedata = "",
-        iscomplete = false
+        -- We will clear this metadata on copy or import.
+        metadata = self:CreateNewCourseMetadata()
     }
 end
 
@@ -505,13 +512,13 @@ function TableKeysToTable(t)
     return keys
 end
 
-function StartsWith(str, start) return string.sub(str, 1, string.len(start)) == start end
-
-function Tablelength(T)
+function TableLength(T)
     local count = 0
     for _ in pairs(T) do count = count + 1 end
     return count
 end
+
+function StartsWith(str, start) return string.sub(str, 1, string.len(start)) == start end
 
 function SetContains(set, key) return set[key] ~= nil end
 

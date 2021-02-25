@@ -14,7 +14,7 @@ local function completePoint(uid)
         TomTom:SetCrazyArrow(nextUid, WorldOfParkour.arrivalDistance, nextUid.title)
     else
         -- This is the final waypoint.
-        WorldOfParkour.activeCourseStore.activecourse.iscomplete = true
+        WorldOfParkour.activeCourseStore.activecourse.metadata.isComplete = true
     end
     TomTom:RemoveWaypoint(uid)
     -- Notify that a point as been completed

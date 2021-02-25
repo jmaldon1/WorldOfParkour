@@ -62,23 +62,19 @@ local function isCourseDifferent(courseA, courseB)
     return isCoursePointsDiff or isCourseDetailsDiff
 end
 
-local function isCourseAlreadyBeingEdited(courseId)
-    if WorldOfParkour.savedCoursesStore.coursesBeingEdited[courseId] == nil then return false end
-    return true
-end
-
 local function enableEditMode(info)
     local courseId = findCourseIdRecursive(info)
-    local coursesBeingEdited = WorldOfParkour.savedCoursesStore.coursesBeingEdited
-    if isCourseAlreadyBeingEdited(courseId) then
+    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
+    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseKey].metadata
+    local characterEditingCourse = savedCourseMetadata.characterEditingCourse
+    if characterEditingCourse ~= "" then
+        local coloredCharacterName = string.format("\124cFFFFF468%s\124r", characterEditingCourse)
         local errMsg = string.format(
                            "This course is already editing by '%s', you must exit editing mode on that character to edit this course.",
-                           coursesBeingEdited[courseId])
+                           coloredCharacterName)
         error(errMsg)
     end
-
-    local myName, myServer = UnitFullName("player")
-    WorldOfParkour.savedCoursesStore.coursesBeingEdited[courseId] = string.format("%s-%s", myName, myServer)
+    savedCourseMetadata.characterEditingCourse = string.format("%s-%s", UnitFullName("player"))
 
     -- Reset the course completion before editing.
     WorldOfParkour:ResetCourseCompletion(WorldOfParkour.activeCourseStore.activecourse, true)
@@ -87,18 +83,46 @@ local function enableEditMode(info)
 end
 
 local function disableEditMode(courseId)
-    WorldOfParkour.savedCoursesStore.coursesBeingEdited[courseId] = nil
+    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
+    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseKey].metadata
+    savedCourseMetadata.characterEditingCourse = ""
     WorldOfParkour.activeCourseStore.isInEditMode = false
     SetCrazyArrowToFirstOrLastPoint("first")
 end
 
-local function enableActiveCourse() WorldOfParkour.activeCourseStore.isActiveCourse = true end
+local function enableActiveCourse(courseId)
+    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
+    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseKey].metadata
+    local charactersWithCourseAsActive = savedCourseMetadata.charactersWithCourseAsActive
+    local playerFullName = string.format("%s-%s", UnitFullName("player"))
+    charactersWithCourseAsActive[playerFullName] = true
 
-local function disableActiveCourse() WorldOfParkour.activeCourseStore.isActiveCourse = false end
+    WorldOfParkour.activeCourseStore.isActiveCourse = true
+end
+
+local function disableActiveCourse(courseId)
+    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
+    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseKey].metadata
+    local charactersWithCourseAsActive = savedCourseMetadata.charactersWithCourseAsActive
+    local playerFullName = string.format("%s-%s", UnitFullName("player"))
+    charactersWithCourseAsActive[playerFullName] = nil
+
+    WorldOfParkour.activeCourseStore.isActiveCourse = false
+end
 
 local function removeCourse(info, action)
     local courseId = findCourseIdRecursive(info)
     local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
+
+    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseKey].metadata
+    local charactersWithCourseAsActive = TableKeys(savedCourseMetadata.charactersWithCourseAsActive)
+    if #charactersWithCourseAsActive > 0 then
+        local charactersWithCourseAsActiveList = table.concat(charactersWithCourseAsActive, ", ")
+        local coloredCharacterNames = string.format("\124cFFFFF468%s\124r", charactersWithCourseAsActiveList)
+        error("Unset this course as active from the following characters before removing: " ..
+                  coloredCharacterNames)
+    end
+
     table.remove(WorldOfParkour.savedCoursesStore.savedcourses, courseKey)
     WorldOfParkour.GUIoptionsStore.options.args.courselist.args[courseId] = nil
 end
@@ -129,9 +153,7 @@ end
 local function getEditableCourseTitle()
     local activeCourse = WorldOfParkour.activeCourseStore.activecourse
     local title = activeCourse.title
-    if activeCourse.iscomplete then
-        return addCompletedTitleColor(title)
-    end
+    if activeCourse.metadata.isComplete then return addCompletedTitleColor(title) end
     return title
 end
 
@@ -170,7 +192,7 @@ local function unsetActiveCourse(info)
     WorldOfParkour:RemoveAllTomTomWaypoints()
 
     disableEditMode(courseId)
-    disableActiveCourse()
+    disableActiveCourse(courseId)
 
     local isCourseDiff = isCourseDifferent(activeCourse, backupActiveCourse)
     if isCourseDiff then updateCourse() end
@@ -191,7 +213,7 @@ local function getCourseTitle(info)
     local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
     local course = WorldOfParkour.savedCoursesStore.savedcourses[courseKey]
     local title = course.title
-    if course.iscomplete and not isCourseActive(courseId) then
+    if course.metadata.isComplete and not isCourseActive(courseId) then
         return addCompletedTitleColor(title)
     end
     return title
@@ -640,14 +662,14 @@ local function setActiveCourse(info, action)
     ReplaceTable(savedCourseCopy, WorldOfParkour.activeCourseStore.activecourse)
     ReplaceTable(savedCourseBackupCopy, WorldOfParkour.activeCourseStore.backupActivecourse)
 
-    enableActiveCourse()
+    enableActiveCourse(courseId)
 
     -- Add TomTom waypoints to screen.
     if #savedCourse.course ~= 0 then
         local isSuccess, err = pcall(Bind(WorldOfParkour, "ReloadActiveCourse"))
         if not isSuccess then
             -- User tried to load a bad course, we stop them here.
-            disableActiveCourse()
+            disableActiveCourse(courseId)
             WorldOfParkour.activeCourseStore.activecourse = {}
             WorldOfParkour.activeCourseStore.backupActivecourse = {}
             error(err)
