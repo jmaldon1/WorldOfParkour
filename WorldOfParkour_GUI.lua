@@ -81,7 +81,7 @@ local function enableEditMode(info)
     WorldOfParkour.savedCoursesStore.coursesBeingEdited[courseId] = string.format("%s-%s", myName, myServer)
 
     -- Reset the course completion before editing.
-    WorldOfParkour:ResetCourseCompletion()
+    WorldOfParkour:ResetCourseCompletion(WorldOfParkour.activeCourseStore.activecourse, true)
     WorldOfParkour.activeCourseStore.isInEditMode = true
     SetCrazyArrowToFirstOrLastPoint("last")
 end
@@ -230,6 +230,8 @@ local function getPointOrder(info) return tonumber(info[#info]) end
 local function getCourseSearch() return WorldOfParkour.courseSearch end
 
 local function displayMatchingCourses(courseStartsWith)
+    -- This is a simple search, it will just find courses that begin with
+    -- the characters the user has typed into the input box.
     -- Hide courses that do not match the search criteria
     local uuidPattern = "%w+-%w+-4%w+-%w+-%w+"
     local courseList = WorldOfParkour.GUIoptionsStore.options.args.courselist.args
@@ -417,6 +419,16 @@ local function getWoWPatch(info)
     return string.format("\124cFFFFFF00Last modified date: %s\124r", lastModifiedDate)
 end
 
+local function courseResetButtonFn()
+    local courseDetails = WorldOfParkour.activeCourseStore.activecourse
+    WorldOfParkour:ResetCourseCompletion(courseDetails, true)
+end
+
+local function editCourseConfirm()
+    local course = WorldOfParkour.activeCourseStore.activecourse.course
+    return WorldOfParkour:IsCourseBeingRun(course)
+end
+
 local function createActiveCourseGUI()
     local activeCourse = {
         name = getEditableCourseTitle,
@@ -467,7 +479,7 @@ local function createActiveCourseGUI()
                     editcourse = {
                         name = "Edit Course",
                         desc = "Edit the course",
-                        confirm = Bind(WorldOfParkour, "IsCourseBeingRun"),
+                        confirm = editCourseConfirm,
                         confirmText = "Editing the course now will reset your completion progress. Are you sure?\n\n" ..
                             "If you would like to edit this course without losing your progress, make a copy and edit that.",
                         type = "execute",
@@ -558,7 +570,7 @@ local function createActiveCourseGUI()
                         confirmText = "Are you sure you want to reset the course completion?",
                         disabled = isCourseCompletionResetDisabled,
                         order = 5,
-                        func = Bind(WorldOfParkour, "ResetCourseCompletion")
+                        func = courseResetButtonFn
                     }
                 }
             }
@@ -706,7 +718,7 @@ local function createSavedCourseGUI()
             options = {name = "Options", type = "header", order = 9},
             setactivecourse = {
                 name = "Set As Active Course",
-                desc = "Edit the course",
+                desc = "Set this course as active to run or edit the course.",
                 type = "execute",
                 width = "full",
                 disabled = Bind(WorldOfParkour, "isActiveCourse"),
@@ -736,7 +748,7 @@ local function createSavedCourseGUI()
             blank_____ = {order = 15, type = "description", name = "\n\n"},
             showcoursestring = {
                 name = "Show sharable course string",
-                -- desc = "Create a copy of this course",
+                desc = "Show a string that can be used to share your course with friends.",
                 type = "toggle",
                 set = setToggleCourseString,
                 get = getToggleCourseString,
@@ -745,7 +757,7 @@ local function createSavedCourseGUI()
             },
             createcoursestring = {
                 name = "Sharable Course String",
-                desc = "Send this string to your friends so they can try your courses.",
+                desc = "Send this string to your friends so they can try your course.",
                 type = "input",
                 hidden = displayCourseString,
                 multiline = true,
@@ -770,6 +782,8 @@ function CopyCourse(info)
     savedCourseCopy.title = savedCourseCopy.title .. " Copy"
     -- New WoW patch
     savedCourseCopy.wowpatch = select(4, GetBuildInfo())
+    -- Reset course completion
+    WorldOfParkour:ResetCourseCompletion(savedCourseCopy)
     -- Insert
     WorldOfParkour:InsertToSavedCourses(savedCourseCopy)
     -- Add course to GUI

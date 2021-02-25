@@ -63,15 +63,19 @@ function WorldOfParkour:ImportSharableString(sharableCourseString)
     -- Deserialize
     local isSuccess, deserializedResults = LibSerialize:Deserialize(decompress_deflate)
     if not isSuccess then error("LibSerialize: Error deserializing " .. deserializedResults) end
-    local course = validateDeserializedData(deserializedResults)
+    local courseDetails = validateDeserializedData(deserializedResults)
 
-    local foundId = FindSavedCourseKeyById(self.savedCoursesStore.savedcourses, course.id)
+    local foundId = FindSavedCourseKeyById(self.savedCoursesStore.savedcourses, courseDetails.id)
     -- Check if id is unique
     if foundId then
         -- id was not unique... make a new one.
-        course.id = UUID()
+        courseDetails.id = UUID()
     end
+
+    -- Reset course completion
+    WorldOfParkour:ResetCourseCompletion(courseDetails)
+
     -- Add to saved courses.
-    WorldOfParkour:InsertToSavedCourses(course)
-    return course.id
+    WorldOfParkour:InsertToSavedCourses(courseDetails)
+    return courseDetails.id
 end

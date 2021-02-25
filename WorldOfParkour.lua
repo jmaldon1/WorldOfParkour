@@ -134,15 +134,15 @@ function WorldOfParkour:IsCourseBeingRun(course) return self:GetCourseCompletion
 
 function WorldOfParkour:IsCourseNotBeingRun(course) return not self:IsCourseBeingRun(course) end
 
-function WorldOfParkour:ResetCourseCompletion()
-    if self:isNotActiveCourse() then NotInActiveModeError() end
-
-    self.activeCourseStore.activecourse.iscomplete = false
-    for _, coursePoint in pairs(self.activeCourseStore.activecourse.course) do
+function WorldOfParkour:ResetCourseCompletion(courseDetails, isActiveCourse)
+    courseDetails.iscomplete = false
+    for _, coursePoint in pairs(courseDetails.course) do
         coursePoint.completed = false
     end
 
-    self:ReloadActiveCourse()
+    if isActiveCourse then
+        self:ReloadActiveCourse()
+    end
 end
 
 function WorldOfParkour:GetCourseCompletion(course)
@@ -378,7 +378,7 @@ function WorldOfParkour:NewCourseDefaults()
         difficulty = "Easy",
         lastmodifieddate = date("%m/%d/%y %H:%M:%S"),
         compressedcoursedata = "",
-        iscomplete = false,
+        iscomplete = false
     }
 end
 
