@@ -30,12 +30,10 @@ end
 
 local function validateDeserializedData(deserializedResults)
     -- We need to make sure the deserialized data isn't going to break our addon...
-    if type(deserializedResults) ~= "table" then
-        error("validateDeserializedData: Invalid import data.")
-    end
+    if type(deserializedResults) ~= "table" then error("validateDeserializedData: Invalid import data.") end
     local errMsg = "validateDeserializedData: Bad Import"
     -- Check if the course keys are correct.
-    local newCourse  = WorldOfParkour:NewCourseDefaults()
+    local newCourse = WorldOfParkour:NewCourseDefaults()
     compareTableTypes(deserializedResults, newCourse, errMsg)
 
     -- Check if the point keys are correct.
@@ -50,8 +48,7 @@ local function validateDeserializedData(deserializedResults)
 end
 
 function WorldOfParkour:ImportSharableString(sharableCourseString)
-    local _, _, encodeVersion, encoded =
-        string.find(sharableCourseString, "^(!WOP:%d+!)(.+)$")
+    local _, _, encodeVersion, encoded = string.find(sharableCourseString, "^(!WOP:%d+!)(.+)$")
     if encodeVersion then
         encodeVersion = tonumber(string.match(encodeVersion, "%d+"))
     else
@@ -62,19 +59,13 @@ function WorldOfParkour:ImportSharableString(sharableCourseString)
     local compress_deflate = LibDeflate:DecodeForPrint(encoded)
     -- Decompress
     local decompress_deflate = LibDeflate:DecompressDeflate(compress_deflate)
-    if decompress_deflate == nil then
-        error("LibDeflate: Decompression failed.")
-    end
+    if decompress_deflate == nil then error("LibDeflate: Decompression failed.") end
     -- Deserialize
-    local isSuccess, deserializedResults =
-        LibSerialize:Deserialize(decompress_deflate)
-    if not isSuccess then
-        error("LibSerialize: Error deserializing " .. deserializedResults)
-    end
+    local isSuccess, deserializedResults = LibSerialize:Deserialize(decompress_deflate)
+    if not isSuccess then error("LibSerialize: Error deserializing " .. deserializedResults) end
     local course = validateDeserializedData(deserializedResults)
 
-    local foundId = FindSavedCourseKeyById(self.savedCoursesStore.savedcourses,
-                                           course.id)
+    local foundId = FindSavedCourseKeyById(self.savedCoursesStore.savedcourses, course.id)
     -- Check if id is unique
     if foundId then
         -- id was not unique... make a new one.

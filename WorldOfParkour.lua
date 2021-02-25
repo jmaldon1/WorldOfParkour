@@ -1,40 +1,27 @@
 -- Add standard addon support.
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
-WorldOfParkour = LibStub("AceAddon-3.0"):NewAddon("WorldOfParkour",
-                                                  "AceConsole-3.0",
-                                                  "AceTimer-3.0", "AceEvent-3.0")
+WorldOfParkour = LibStub("AceAddon-3.0"):NewAddon("WorldOfParkour", "AceConsole-3.0", "AceTimer-3.0",
+                                                  "AceEvent-3.0")
 
 function WorldOfParkour:OnInitialize()
     self.activeCourseDefaults = {
-        profile = {
-            isInEditMode = false,
-            isActiveCourse = false,
-            activecourse = {},
-            backupActivecourse = {}
-        }
+        profile = {isInEditMode = false, isActiveCourse = false, activecourse = {}, backupActivecourse = {}}
     }
-    self.savedcoursesDefaults = {
-        global = {savedcourses = {}, coursesBeingEdited = {}}
-    }
+    self.savedcoursesDefaults = {global = {savedcourses = {}, coursesBeingEdited = {}}}
 
-    self.activeCourseDB = LibStub("AceDB-3.0"):New("WoPActiveParkourCourseDB",
-                                                   self.activeCourseDefaults)
-    self.savedCoursesDB = LibStub("AceDB-3.0"):New("WoPSavedParkourCoursesDB",
-                                                   self.savedcoursesDefaults)
+    self.activeCourseDB = LibStub("AceDB-3.0"):New("WoPActiveParkourCourseDB", self.activeCourseDefaults)
+    self.savedCoursesDB = LibStub("AceDB-3.0"):New("WoPSavedParkourCoursesDB", self.savedcoursesDefaults)
 
-    self.activeCourseDB.RegisterCallback(self, "OnProfileChanged",
-                                         "RefreshAddon")
-    self.activeCourseDB
-        .RegisterCallback(self, "OnProfileCopied", "RefreshAddon")
+    self.activeCourseDB.RegisterCallback(self, "OnProfileChanged", "RefreshAddon")
+    self.activeCourseDB.RegisterCallback(self, "OnProfileCopied", "RefreshAddon")
     self.activeCourseDB.RegisterCallback(self, "OnProfileReset", "RefreshAddon")
 
     self.activeCourseStore = self.activeCourseDB.profile
     self.savedCoursesStore = self.savedCoursesDB.global
 
     self.GUIoptionsDefaults = {profile = {options = self:GenerateOptions()}}
-    self.GUIoptionsDB = LibStub("AceDB-3.0"):New("WoPGUIDB",
-                                                 self.GUIoptionsDefaults)
+    self.GUIoptionsDB = LibStub("AceDB-3.0"):New("WoPGUIDB", self.GUIoptionsDefaults)
     self.GUIoptionsStore = self.GUIoptionsDB.profile
 
     self.arrivalDistance = 2
@@ -72,13 +59,9 @@ end
 --[[-------------------------------------------------------------------
 --  WorldOfParkour
 -------------------------------------------------------------------]] --
-function NotInActiveModeError()
-    error("You must have an Active Course to perform this action.")
-end
+function NotInActiveModeError() error("You must have an Active Course to perform this action.") end
 
-function NotInEditModeError()
-    error("You must be in edit mode to perform this action.")
-end
+function NotInEditModeError() error("You must be in edit mode to perform this action.") end
 
 function WorldOfParkour:RefreshAddon()
     -- TODO: Possibly do this without closing the window and just update the GUI.
@@ -86,14 +69,11 @@ function WorldOfParkour:RefreshAddon()
     WorldOfParkour:OnInitialize()
 end
 
-function WorldOfParkour:isActiveCourse()
-    return self.activeCourseStore.isActiveCourse
-end
+function WorldOfParkour:isActiveCourse() return self.activeCourseStore.isActiveCourse end
 
 function WorldOfParkour:isNotActiveCourse() return not self:isActiveCourse() end
 
-function WorldOfParkour:isInEditMode() return
-    self.activeCourseStore.isInEditMode end
+function WorldOfParkour:isInEditMode() return self.activeCourseStore.isInEditMode end
 
 function WorldOfParkour:isNotInEditMode() return not self:isInEditMode() end
 
@@ -113,8 +93,7 @@ function WorldOfParkour:SyncWithTomTomDB()
     self.activeCourseStore.activecourse.course = newActiveCourse
     -- Sanity check to make sure we are now synced.
     if #self.activeCourseStore.activecourse.course ~= 0 then
-        assert(self:IsSyncedWithTomTomDB(),
-               WoPMessage("We aren't synced? Report this bug."))
+        assert(self:IsSyncedWithTomTomDB(), WoPMessage("We aren't synced? Report this bug."))
     end
     -- Reorder the course to deal with the missing values.
     self:ReorderCourseWaypoints()
@@ -146,13 +125,9 @@ function WorldOfParkour:CheckIfPointExists(uid)
     return false
 end
 
-function WorldOfParkour:IsCourseBeingRun(course)
-    return self:GetCourseCompletion(course) ~= 0
-end
+function WorldOfParkour:IsCourseBeingRun(course) return self:GetCourseCompletion(course) ~= 0 end
 
-function WorldOfParkour:IsCourseNotBeingRun(course)
-    return not self:IsCourseBeingRun(course)
-end
+function WorldOfParkour:IsCourseNotBeingRun(course) return not self:IsCourseBeingRun(course) end
 
 function WorldOfParkour:ResetCourseCompletion()
     if self:isNotActiveCourse() then NotInActiveModeError() end
@@ -167,9 +142,7 @@ end
 function WorldOfParkour:GetCourseCompletion(course)
     if #course == 0 then return 0 end
 
-    local isCompleted = function(coursePoint)
-        return coursePoint.completed == true
-    end
+    local isCompleted = function(coursePoint) return coursePoint.completed == true end
     local completePoints = Filter(course, isCompleted)
     return #completePoints / #course
 end
@@ -177,15 +150,11 @@ end
 function WorldOfParkour:GetNextUncompletedPoint()
     -- Find the next uncompleted course point, return nil if all points are completed
     local course = self.activeCourseStore.activecourse.course
-    for _, v in pairs(course) do
-        if v.completed == false then return v.uid end
-    end
+    for _, v in pairs(course) do if v.completed == false then return v.uid end end
     return nil
 end
 
-function WorldOfParkour:CreateCoursePoint(uid)
-    return {uid = uid, hint = "No hint", completed = false}
-end
+function WorldOfParkour:CreateCoursePoint(uid) return {uid = uid, hint = "No hint", completed = false} end
 
 function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
     if self:isNotActiveCourse() then NotInActiveModeError() end
@@ -195,8 +164,7 @@ function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
         error("Max point limit reached.")
     end
 
-    local nextAvailablePointIdxBeforeSync =
-        #self.activeCourseStore.activecourse.course + 1
+    local nextAvailablePointIdxBeforeSync = #self.activeCourseStore.activecourse.course + 1
     if #self.activeCourseStore.activecourse.course ~= 0 then
         if not self:IsSyncedWithTomTomDB() then
             self:SyncWithTomTomDB()
@@ -209,16 +177,12 @@ function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
         end
     end
 
-    local nextAvailablePointIdxAfterSync =
-        #self.activeCourseStore.activecourse.course + 1
+    local nextAvailablePointIdxAfterSync = #self.activeCourseStore.activecourse.course + 1
 
-    if type(idx) ~= "number" then
-        error("SetWaypointAtIndexOnCurrentPosition(idx): idx is not a number.");
-    end
+    if type(idx) ~= "number" then error("SetWaypointAtIndexOnCurrentPosition(idx): idx is not a number."); end
 
     if idx <= 0 or idx > nextAvailablePointIdxAfterSync then
-        error("Point index out of range. " ..
-                  "The next point you can create is " .. "'" ..
+        error("Point index out of range. " .. "The next point you can create is " .. "'" ..
                   nextAvailablePointIdxAfterSync .. "'.");
     end
 
@@ -244,16 +208,12 @@ function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
 end
 
 function WorldOfParkour:RemoveWaypointAndReorder(uid)
-    if type(uid) ~= "table" then
-        error("RemoveWaypoint(uid) UID is not a table.");
-    end
+    if type(uid) ~= "table" then error("RemoveWaypoint(uid) UID is not a table."); end
     local idx = GetCoursePointIndex(uid)
     self:RemoveWaypoint(uid)
 
     -- Do not reorder if user removed last point.
-    if idx - 1 ~= #self.activeCourseStore.activecourse.course then
-        self:ReorderCourseWaypoints()
-    end
+    if idx - 1 ~= #self.activeCourseStore.activecourse.course then self:ReorderCourseWaypoints() end
 
     if #self.activeCourseStore.activecourse.course ~= 0 then
         if not self:IsSyncedWithTomTomDB() then self:SyncWithTomTomDB() end
@@ -261,8 +221,7 @@ function WorldOfParkour:RemoveWaypointAndReorder(uid)
 
     -- -- Add point to GUI
     local uuidPattern = "%w+-%w+-4%w+-%w+-%w+"
-    local activeCourseGUI = WorldOfParkour.GUIoptionsStore.options.args
-                                .activecourse.args
+    local activeCourseGUI = WorldOfParkour.GUIoptionsStore.options.args.activecourse.args
     for k, _ in pairs(activeCourseGUI) do
         -- Find the active course, there will only be 1.
         if string.match(k, uuidPattern) then ReloadPointsToGUI(k) end
@@ -304,8 +263,7 @@ function WorldOfParkour:InsertToSavedCourses(course)
 end
 
 function WorldOfParkour:ReplaceSavedCourse(course, courseKey)
-    ReplaceTable(course,
-                 WorldOfParkour.savedCoursesStore.savedcourses[courseKey])
+    ReplaceTable(course, WorldOfParkour.savedCoursesStore.savedcourses[courseKey])
 end
 
 function WorldOfParkour:CreateWaypointDetails(idx)
@@ -355,11 +313,8 @@ function WorldOfParkour:ReloadActiveCourse()
         local uid = coursePoint.uid
         local m, x, y, options = self:CreateTomTomWaypointArgs(uid)
 
-        local isSuccess, results = pcall(Bind(TomTom, "AddWaypoint"), m, x, y,
-                                         options)
-        if not isSuccess then
-            error("This course is invalid, please delete it.")
-        end
+        local isSuccess, results = pcall(Bind(TomTom, "AddWaypoint"), m, x, y, options)
+        if not isSuccess then error("This course is invalid, please delete it.") end
 
         local updatedUid = results
         if coursePoint.completed == true then
@@ -385,8 +340,7 @@ function WorldOfParkour:ReloadActiveCourse()
     else
         local nextUncompletedUid = self:GetNextUncompletedPoint()
         if not nextUncompletedUid then return end
-        TomTom:SetCrazyArrow(nextUncompletedUid, self.arrivalDistance,
-                             nextUncompletedUid.title)
+        TomTom:SetCrazyArrow(nextUncompletedUid, self.arrivalDistance, nextUncompletedUid.title)
     end
 end
 
@@ -471,10 +425,7 @@ function Filter(tbl, func)
 end
 
 function Difference(a, b)
-    if #b > #a then
-        error(
-            "You must flip the inputs OR ensure that the table lengths are equal.")
-    end
+    if #b > #a then error("You must flip the inputs OR ensure that the table lengths are equal.") end
     local aa = {}
     for k, v in pairs(a) do aa[v] = true end
     for k, v in pairs(b) do aa[v] = nil end
@@ -499,9 +450,7 @@ end
 function Split(inputstr, sep)
     if sep == nil then sep = "%s" end
     local t = {}
-    for str in string.gmatch(inputstr, "([^" .. sep .. "]+)") do
-        table.insert(t, str)
-    end
+    for str in string.gmatch(inputstr, "([^" .. sep .. "]+)") do table.insert(t, str) end
     return t
 end
 
@@ -522,9 +471,7 @@ function Deepcopy(orig)
     local copy
     if orig_type == 'table' then
         copy = {}
-        for orig_key, orig_value in next, orig, nil do
-            copy[Deepcopy(orig_key)] = Deepcopy(orig_value)
-        end
+        for orig_key, orig_value in next, orig, nil do copy[Deepcopy(orig_key)] = Deepcopy(orig_value) end
         setmetatable(copy, Deepcopy(getmetatable(orig)))
     else -- number, string, boolean, etc
         copy = orig
@@ -549,9 +496,7 @@ function TableKeysToTable(t)
     return keys
 end
 
-function StartsWith(str, start)
-    return string.sub(str, 1, string.len(start)) == start
-end
+function StartsWith(str, start) return string.sub(str, 1, string.len(start)) == start end
 
 function Tablelength(T)
     local count = 0

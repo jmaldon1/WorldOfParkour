@@ -15,8 +15,7 @@ local function setPointAfterCmd(args)
 
     -- Input must be a number
     if not tonumber(afterIdx) then
-        error("Input to /setpointafter must be a number. " .. "'" .. afterIdx .. "'" ..
-                    " is not a number.")
+        error("Input to /setpointafter must be a number. " .. "'" .. afterIdx .. "'" .. " is not a number.")
     end
 
     SetPoint(tonumber(afterIdx) + 1)
@@ -32,13 +31,10 @@ function SetPoint(idx)
 
     -- Add point to GUI
     local uuidPattern = "%w+-%w+-4%w+-%w+-%w+"
-    local activeCourseGUI = WorldOfParkour.GUIoptionsStore.options.args.activecourse
-                           .args
+    local activeCourseGUI = WorldOfParkour.GUIoptionsStore.options.args.activecourse.args
     for k, _ in pairs(activeCourseGUI) do
         -- Find the active course, there will only be 1.
-        if string.match(k, uuidPattern) then
-            ReloadPointsToGUI(k)
-        end
+        if string.match(k, uuidPattern) then ReloadPointsToGUI(k) end
     end
 end
 

@@ -7,14 +7,10 @@ local function createBlizzOptions()
         about = {
             order = 1,
             name = "Create parkour courses around the world and share them with friends.",
-            type = "description",
+            type = "description"
         },
         blank = {order = 2, type = "description", name = "\n\n\n"},
-        help = {
-            order = 3,
-            type = "description",
-            name = "Account wide settings for the WorldOfParkour addon."
-        },
+        help = {order = 3, type = "description", name = "Account wide settings for the WorldOfParkour addon."},
         blank_ = {order = 4, type = "description", name = "\n"},
         resetheader = {order = 5, type = "header", name = "Master Addon Tools"},
         resetbutton = {
@@ -65,19 +61,14 @@ local function createBlizzOptions()
 end
 
 local function createBlizzOptionsGUI()
-    AceConfig:RegisterOptionsTable("WorldOfParkour-Bliz", {
-        name = "WorldOfParkour",
-        type = "group",
-        args = createBlizzOptions()
-    })
+    AceConfig:RegisterOptionsTable("WorldOfParkour-Bliz",
+                                   {name = "WorldOfParkour", type = "group", args = createBlizzOptions()})
     AceConfigDialog:AddToBlizOptions("WorldOfParkour-Bliz", "WorldOfParkour")
 
     -- Profile Options
     AceConfig:RegisterOptionsTable("Active Course Profile",
-                                   AceDBOptions:GetOptionsTable(
-                                       WorldOfParkour.activeCourseDB))
-    AceConfigDialog:AddToBlizOptions("Active Course Profile",
-                                     "Active Course Profiles", "WorldOfParkour")
+                                   AceDBOptions:GetOptionsTable(WorldOfParkour.activeCourseDB))
+    AceConfigDialog:AddToBlizOptions("Active Course Profile", "Active Course Profiles", "WorldOfParkour")
 end
 
 function WorldOfParkour:CreateConfig() createBlizzOptionsGUI() end
