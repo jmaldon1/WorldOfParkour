@@ -794,22 +794,20 @@ end
 function CopyCourse(info)
     local courseId = findCourseIdRecursive(info)
     local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
-    local newCourseGUI = createSavedCourseGUI()
     local savedCourse = WorldOfParkour.savedCoursesStore.savedcourses[courseKey]
     local savedCourseCopy = Deepcopy(savedCourse)
     -- New UUID because we just made a copy of an existing course.
     local uuid = UUID()
     savedCourseCopy.id = uuid
-    -- New title
     savedCourseCopy.title = savedCourseCopy.title .. " Copy"
-    -- New WoW patch
-    savedCourseCopy.wowpatch = select(4, GetBuildInfo())
-    -- Reset course completion
+    savedCourseCopy.lastmodifieddate = date("%m/%d/%y %H:%M:%S")
+    -- Reset metadata
+    savedCourseCopy.metadata = WorldOfParkour:CreateNewCourseMetadata()
     WorldOfParkour:ResetCourseCompletion(savedCourseCopy)
     -- Insert
     WorldOfParkour:InsertToSavedCourses(savedCourseCopy)
     -- Add course to GUI
-    WorldOfParkour.GUIoptionsStore.options.args.courselist.args[uuid] = newCourseGUI
+    WorldOfParkour.GUIoptionsStore.options.args.courselist.args[uuid] = createSavedCourseGUI()
     -- Select the new course once its been created.
     WorldOfParkour:ScheduleTimer(selectCourse, 0, uuid)
 end

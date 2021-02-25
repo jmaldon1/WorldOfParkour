@@ -74,6 +74,8 @@ function WorldOfParkour:ImportSharableString(sharableCourseString)
 
     -- Reset course completion
     WorldOfParkour:ResetCourseCompletion(courseDetails)
+    -- Reset metadata
+    courseDetails.metadata = WorldOfParkour:CreateNewCourseMetadata()
 
     -- Add to saved courses.
     WorldOfParkour:InsertToSavedCourses(courseDetails)
