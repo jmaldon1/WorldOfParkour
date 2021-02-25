@@ -115,7 +115,25 @@ end
 
 local function selectCourse(courseId) AceConfigDialog:SelectGroup("WorldOfParkour", "courselist", courseId) end
 
-local function getEditableCourseTitle() return WorldOfParkour.activeCourseStore.activecourse.title end
+local function isCourseActive(courseId)
+    local activeCourse = WorldOfParkour.GUIoptionsStore.options.args.activecourse.args[courseId]
+    if activeCourse then return true end
+    return false
+end
+
+local function addCompletedTitleColor(title)
+    -- Show green text for completed courses.
+    return string.format("\124cFF34AA05%s\124r", title)
+end
+
+local function getEditableCourseTitle()
+    local activeCourse = WorldOfParkour.activeCourseStore.activecourse
+    local title = activeCourse.title
+    if activeCourse.iscomplete then
+        return addCompletedTitleColor(title)
+    end
+    return title
+end
 
 local function setEditableCourseTitle(info, title) WorldOfParkour.activeCourseStore.activecourse.title = title end
 
@@ -133,9 +151,7 @@ local function getEditableCourseDifficulty() return WorldOfParkour.activeCourseS
 
 local function disableActiveCourseFromAllCourses(info)
     local courseId = findCourseIdRecursive(info)
-    local activeCourse = WorldOfParkour.GUIoptionsStore.options.args.activecourse.args[courseId]
-    if activeCourse then return true end
-    return false
+    return isCourseActive(courseId)
 end
 
 local function updateCourse()
@@ -173,7 +189,12 @@ end
 local function getCourseTitle(info)
     local courseId = findCourseIdRecursive(info)
     local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
-    return WorldOfParkour.savedCoursesStore.savedcourses[courseKey].title
+    local course = WorldOfParkour.savedCoursesStore.savedcourses[courseKey]
+    local title = course.title
+    if course.iscomplete and not isCourseActive(courseId) then
+        return addCompletedTitleColor(title)
+    end
+    return title
 end
 
 local function getCourseDescription(info)
@@ -373,6 +394,13 @@ end
 local function getActiveCourseCompletion()
     if WorldOfParkour:isNotActiveCourse() then NotInActiveModeError() end
     local course = WorldOfParkour.activeCourseStore.activecourse.course
+    return WorldOfParkour:GetCourseCompletion(course)
+end
+
+local function getSavedCourseCompletion(info)
+    local courseId = findCourseIdRecursive(info)
+    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
+    local course = WorldOfParkour.savedCoursesStore.savedcourses[courseKey].course
     return WorldOfParkour:GetCourseCompletion(course)
 end
 
@@ -646,13 +674,6 @@ end
 local function displayCourseString(info)
     local courseId = findCourseIdRecursive(info)
     return not WorldOfParkour.showCourseString[courseId]
-end
-
-local function getSavedCourseCompletion(info)
-    local courseId = findCourseIdRecursive(info)
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
-    local course = WorldOfParkour.savedCoursesStore.savedcourses[courseKey].course
-    return WorldOfParkour:GetCourseCompletion(course)
 end
 
 local function createSavedCourseGUI()

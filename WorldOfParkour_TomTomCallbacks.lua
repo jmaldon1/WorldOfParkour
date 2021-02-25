@@ -4,7 +4,6 @@
 local dropdown = CreateFrame("Frame", "TomTomDropdown", nil, "UIDropDownMenuTemplate")
 
 local function completePoint(uid)
-    -- local nextUncompletedPoint = WorldOfParkour:GetNextUncompletedPoint()
     local idx = GetCoursePointIndex(uid)
     local activeCourse = WorldOfParkour.activeCourseStore.activecourse.course
     activeCourse[idx].completed = true
@@ -12,8 +11,10 @@ local function completePoint(uid)
     if idx ~= #activeCourse then
         -- Set crazy arrow to the next point in the course.
         local nextUid = activeCourse[idx + 1].uid
-        -- local nextUid = nextUncompletedPoint.uid
         TomTom:SetCrazyArrow(nextUid, WorldOfParkour.arrivalDistance, nextUid.title)
+    else
+        -- This is the final waypoint.
+        WorldOfParkour.activeCourseStore.activecourse.iscomplete = true
     end
     TomTom:RemoveWaypoint(uid)
     -- Notify that a point as been completed

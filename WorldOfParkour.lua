@@ -125,6 +125,11 @@ function WorldOfParkour:CheckIfPointExists(uid)
     return false
 end
 
+function WorldOfParkour:IsCourseComplete(course)
+    print(self:GetCourseCompletion(course))
+    return self:GetCourseCompletion(course) == 1
+end
+
 function WorldOfParkour:IsCourseBeingRun(course) return self:GetCourseCompletion(course) ~= 0 end
 
 function WorldOfParkour:IsCourseNotBeingRun(course) return not self:IsCourseBeingRun(course) end
@@ -132,6 +137,7 @@ function WorldOfParkour:IsCourseNotBeingRun(course) return not self:IsCourseBein
 function WorldOfParkour:ResetCourseCompletion()
     if self:isNotActiveCourse() then NotInActiveModeError() end
 
+    self.activeCourseStore.activecourse.iscomplete = false
     for _, coursePoint in pairs(self.activeCourseStore.activecourse.course) do
         coursePoint.completed = false
     end
@@ -140,6 +146,8 @@ function WorldOfParkour:ResetCourseCompletion()
 end
 
 function WorldOfParkour:GetCourseCompletion(course)
+    -- Returns a value between 0 and 1.
+    -- 0 being unstarted and 1 being complete.
     if #course == 0 then return 0 end
 
     local isCompleted = function(coursePoint) return coursePoint.completed == true end
@@ -326,7 +334,7 @@ function WorldOfParkour:ReloadActiveCourse()
         -- Move details from old coursePoint to new coursePoint
         for k, v in pairs(coursePoint) do
             if k ~= "uid" then
-                -- We don't want the old Uid.
+                -- We don't want the old Uid because we already recreated it.
                 updatedCoursePoint[k] = v
             end
         end
@@ -369,7 +377,8 @@ function WorldOfParkour:NewCourseDefaults()
         course = {},
         difficulty = "Easy",
         lastmodifieddate = date("%m/%d/%y %H:%M:%S"),
-        compressedcoursedata = ""
+        compressedcoursedata = "",
+        iscomplete = false,
     }
 end
 
