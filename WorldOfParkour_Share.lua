@@ -81,8 +81,7 @@ function WorldOfParkour:ImportSharableString(sharableCourseString)
     newSavedCourse.course = courseDetails.course
     newSavedCourse.difficulty = courseDetails.difficulty
     newSavedCourse.lastmodifieddate = courseDetails.lastmodifieddate
-    -- Compressing the imported data will produce the exact same import string
-    newSavedCourse.compressedcoursedata = WorldOfParkour:CompressCourseData(courseDetails)
+    newSavedCourse.compressedcoursedata = WorldOfParkour:CompressCourseData(newSavedCourse)
 
     WorldOfParkour:ResetCourseCompletion(newSavedCourse)
 
