@@ -55,10 +55,6 @@ function WorldOfParkour:OnEnable()
     if self:isActiveCourse() then self:ReloadActiveCourse() end
 end
 
-function WorldOfParkour:OnDisable()
-    print("HERE")
-end
-
 local function showError(msg)
     local err = "\124cFFFF0000Error: \124r"
     WorldOfParkour:Print(err .. msg)

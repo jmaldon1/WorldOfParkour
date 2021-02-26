@@ -31,16 +31,16 @@ function FindSavedCourseKeyById(savedCourses, id)
     for k, v in ipairs(savedCourses) do if v.id == id then return k end end
 end
 
-local function isCoursePointsDifferent(courseAPoints, courseBPoints)
-    if #courseAPoints ~= #courseBPoints then return true end
+local function isCoursePointsDifferent(courseAPointsDetails, courseBPointsDetails)
+    if #courseAPointsDetails ~= #courseBPointsDetails then return true end
 
     local courseAPointIds = {}
     local courseBPointIds = {}
 
-    for _, coursePoint in pairs(courseAPoints) do
+    for _, coursePoint in pairs(courseAPointsDetails) do
         table.insert(courseAPointIds, TomTom:GetKey(coursePoint.uid))
     end
-    for _, coursePoint in pairs(courseBPoints) do
+    for _, coursePoint in pairs(courseBPointsDetails) do
         table.insert(courseBPointIds, TomTom:GetKey(coursePoint.uid))
     end
 
@@ -48,10 +48,9 @@ local function isCoursePointsDifferent(courseAPoints, courseBPoints)
     return true
 end
 
-local function isCourseDetailsDifferent(courseA, courseB)
+local function isCourseDetailsDifferent(courseA, courseB, detailsToSkip)
     for detailName, detail in pairs(courseA) do
         -- Skip irrelevant details.
-        local detailsToSkip = {course = true, metadata = true}
         if not SetContains(detailsToSkip, detailName) then
             if courseB[detailName] ~= detail then return true end
         end
@@ -59,10 +58,25 @@ local function isCourseDetailsDifferent(courseA, courseB)
     return false
 end
 
+local function isCoursePointDetailsDifferent(courseAPointsDetails, courseBPointsDetails)
+    if #courseAPointsDetails ~= #courseBPointsDetails then return true end
+
+    local detailsToSkip = {uid = true, completed = true}
+
+    for i = 1, #courseAPointsDetails do
+        local isCoursePointDetailsDiff = isCourseDetailsDifferent(courseAPointsDetails[i],
+                                                                  courseBPointsDetails[i], detailsToSkip)
+        if isCoursePointDetailsDiff then return true end
+    end
+    return false
+end
+
 local function isCourseDifferent(courseA, courseB)
     local isCoursePointsDiff = isCoursePointsDifferent(courseA.course, courseB.course)
-    local isCourseDetailsDiff = isCourseDetailsDifferent(courseA, courseB)
-    return isCoursePointsDiff or isCourseDetailsDiff
+    local detailsToSkip = {course = true, metadata = true}
+    local isCourseDetailsDiff = isCourseDetailsDifferent(courseA, courseB, detailsToSkip)
+    local isCoursePointDetailsDiff = isCoursePointDetailsDifferent(courseA.course, courseB.course)
+    return isCoursePointsDiff or isCourseDetailsDiff or isCoursePointDetailsDiff
 end
 
 local function enableEditMode(info)
@@ -342,7 +356,7 @@ local function createPointGUI()
                 width = 0.85,
                 order = 4,
                 func = removePoint
-            },
+            }
         }
     }
 end
@@ -830,13 +844,14 @@ function ImportAndAddToGUI(courseString)
     local courseId = WorldOfParkour:ImportSharableString(courseString)
     -- Add course to GUI
     WorldOfParkour.GUIoptionsStore.options.args.courselist.args[courseId] = createSavedCourseGUI()
+    return courseId
 end
 
 local function getImportCourseString() return WorldOfParkour.importCourseString end
 
 local function setImportCourseString(info, courseString)
     WorldOfParkour.importCourseString = courseString
-    ImportAndAddToGUI(courseString)
+    local courseId = ImportAndAddToGUI(courseString)
     -- Select the imported course once its been created.
     WorldOfParkour:ScheduleTimer(selectCourse, 0, courseId)
 end
