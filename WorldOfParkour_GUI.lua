@@ -50,8 +50,11 @@ end
 
 local function isCourseDetailsDifferent(courseA, courseB)
     for detailName, detail in pairs(courseA) do
-        -- Skip the course points
-        if detailName ~= "course" then if courseB[detailName] ~= detail then return true end end
+        -- Skip irrelevant details.
+        local detailsToSkip = {course = true, metadata = true}
+        if not SetContains(detailsToSkip, detailName) then
+            if courseB[detailName] ~= detail then return true end
+        end
     end
     return false
 end
@@ -403,6 +406,7 @@ local function disableUndo()
     local backupActiveCourse = WorldOfParkour.activeCourseStore.backupActivecourse
     local activeCourse = WorldOfParkour.activeCourseStore.activecourse
     -- Disable if courses aren't different
+    print(isCourseDifferent(activeCourse, backupActiveCourse))
     return not isCourseDifferent(activeCourse, backupActiveCourse)
 end
 
