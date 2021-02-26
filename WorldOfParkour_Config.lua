@@ -29,6 +29,7 @@ local function createBlizzOptions()
                 WorldOfParkour.activeCourseDB:ResetProfile()
                 WorldOfParkour.activeCourseDB:ResetDB()
                 WorldOfParkour.savedCoursesDB:ResetDB()
+                WorldOfParkour.firstLoadDB:ResetDB()
                 WorldOfParkour:OnInitialize()
             end
         },

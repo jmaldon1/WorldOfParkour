@@ -3,15 +3,16 @@ local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 WorldOfParkour = LibStub("AceAddon-3.0"):NewAddon("WorldOfParkour", "AceConsole-3.0", "AceTimer-3.0",
                                                   "AceEvent-3.0")
-
 function WorldOfParkour:OnInitialize()
     self.activeCourseDefaults = {
         profile = {isInEditMode = false, isActiveCourse = false, activecourse = {}, backupActivecourse = {}}
     }
     self.savedcoursesDefaults = {global = {savedcourses = {}}}
+    self.firstLoadDefaults = {global = {isFirstLoad = true}}
 
     self.activeCourseDB = LibStub("AceDB-3.0"):New("WoPActiveParkourCourseDB", self.activeCourseDefaults)
     self.savedCoursesDB = LibStub("AceDB-3.0"):New("WoPSavedParkourCoursesDB", self.savedcoursesDefaults)
+    self.firstLoadDB = LibStub("AceDB-3.0"):New("WoPFirstLoadDB", self.firstLoadDefaults)
 
     self.activeCourseDB.RegisterCallback(self, "OnProfileChanged", "RefreshAddon")
     self.activeCourseDB.RegisterCallback(self, "OnProfileCopied", "RefreshAddon")
@@ -19,6 +20,7 @@ function WorldOfParkour:OnInitialize()
 
     self.activeCourseStore = self.activeCourseDB.profile
     self.savedCoursesStore = self.savedCoursesDB.global
+    self.firstLoadStore = self.firstLoadDB.global
 
     self.GUIoptionsDefaults = {profile = {options = self:GenerateOptions()}}
     self.GUIoptionsDB = LibStub("AceDB-3.0"):New("WoPGUIDB", self.GUIoptionsDefaults)
@@ -39,8 +41,22 @@ function WorldOfParkour:OnEnable()
     -- Blizzard Addon interface menu.
     self:CreateConfig()
 
+    -- Load all default courses the first time the addon is opened.
+    -- These will not be added again unless the user resets the addon.
+    if self.firstLoadStore.isFirstLoad then
+        local defaultCoursesImportStrings = {MountainParkourMap}
+        for _, courseImportString in pairs(defaultCoursesImportStrings) do
+            ImportAndAddToGUI(courseImportString)
+        end
+        self.firstLoadStore.isFirstLoad = false
+    end
+
     -- Reload last active parkour course on load.
     if self:isActiveCourse() then self:ReloadActiveCourse() end
+end
+
+function WorldOfParkour:OnDisable()
+    print("HERE")
 end
 
 local function showError(msg)
@@ -123,11 +139,6 @@ function WorldOfParkour:CheckIfPointExists(uid)
         if TomTom:GetKey(coursePoint.uid) == key then return true end
     end
     return false
-end
-
-function WorldOfParkour:IsCourseComplete(course)
-    print(self:GetCourseCompletion(course))
-    return self:GetCourseCompletion(course) == 1
 end
 
 function WorldOfParkour:IsCourseBeingRun(course) return self:GetCourseCompletion(course) ~= 0 end

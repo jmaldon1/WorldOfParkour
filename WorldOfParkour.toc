@@ -10,7 +10,7 @@
 ## X-Curse-Project-ID: 445791
 ## X-WoWI-ID: 25894
 ## Author: Josh
-## SavedVariables: WoPActiveParkourCourseDB, WoPSavedParkourCoursesDB, WoPGUIDB
+## SavedVariables: WoPActiveParkourCourseDB, WoPSavedParkourCoursesDB, WoPGUIDB, WoPFirstLoadDB
 ## Version: 1.0.0
 
 # external libs
@@ -29,3 +29,4 @@ WorldOfParkour_Config.lua
 WorldOfParkour_Commands.lua
 WorldOfParkour_TomTomCallbacks.lua
 WorldOfParkour_GUI.lua
+default_courses\WorldOfParkour_MountainParkour.lua

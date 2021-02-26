@@ -342,7 +342,7 @@ local function createPointGUI()
                 width = 0.85,
                 order = 4,
                 func = removePoint
-            }
+            },
         }
     }
 end
@@ -406,7 +406,6 @@ local function disableUndo()
     local backupActiveCourse = WorldOfParkour.activeCourseStore.backupActivecourse
     local activeCourse = WorldOfParkour.activeCourseStore.activecourse
     -- Disable if courses aren't different
-    print(isCourseDifferent(activeCourse, backupActiveCourse))
     return not isCourseDifferent(activeCourse, backupActiveCourse)
 end
 
@@ -827,13 +826,17 @@ local function addNewCourse()
     WorldOfParkour:ScheduleTimer(selectCourse, 0, newCourseDefaults.id)
 end
 
+function ImportAndAddToGUI(courseString)
+    local courseId = WorldOfParkour:ImportSharableString(courseString)
+    -- Add course to GUI
+    WorldOfParkour.GUIoptionsStore.options.args.courselist.args[courseId] = createSavedCourseGUI()
+end
+
 local function getImportCourseString() return WorldOfParkour.importCourseString end
 
 local function setImportCourseString(info, courseString)
     WorldOfParkour.importCourseString = courseString
-    local courseId = WorldOfParkour:ImportSharableString(courseString)
-    -- Add course to GUI
-    WorldOfParkour.GUIoptionsStore.options.args.courselist.args[courseId] = createSavedCourseGUI()
+    ImportAndAddToGUI(courseString)
     -- Select the imported course once its been created.
     WorldOfParkour:ScheduleTimer(selectCourse, 0, courseId)
 end
