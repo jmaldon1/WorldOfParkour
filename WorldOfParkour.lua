@@ -55,7 +55,7 @@ function WorldOfParkour:OnEnable()
     if self:isActiveCourse() then self:ReloadActiveCourse() end
 end
 
--- -- Get the current error handler
+-- Get the current error handler
 local origHandler = geterrorhandler()
 
 local function OnErrorHandler(msg)
