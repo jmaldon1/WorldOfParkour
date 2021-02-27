@@ -55,13 +55,15 @@ function WorldOfParkour:OnEnable()
     if self:isActiveCourse() then self:ReloadActiveCourse() end
 end
 
-local function showError(msg)
+-- -- Get the current error handler
+local origHandler = geterrorhandler()
+
+local function OnErrorHandler(msg)
     local err = "\124cFFFF0000Error: \124r"
     WorldOfParkour:Print(err .. msg)
+    return origHandler(msg)
 end
-
--- Wow error handler
-seterrorhandler(showError);
+seterrorhandler(OnErrorHandler)
 
 local function WoPMessage(msg)
     -- Create string with addon name appended.
