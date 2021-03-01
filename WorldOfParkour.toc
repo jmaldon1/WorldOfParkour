@@ -29,4 +29,7 @@ WorldOfParkour_Config.lua
 WorldOfParkour_Commands.lua
 WorldOfParkour_TomTomCallbacks.lua
 WorldOfParkour_GUI.lua
+
+# Default courses (Imported on first addon load)
 default_courses\WorldOfParkour_MountainParkour.lua
+default_courses\WorldOfParkour_DescendingHyjal.lua

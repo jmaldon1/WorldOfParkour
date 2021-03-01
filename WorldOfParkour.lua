@@ -44,7 +44,7 @@ function WorldOfParkour:OnEnable()
     -- Load all default courses the first time the addon is opened.
     -- These will not be added again unless the user resets the addon.
     if self.firstLoadStore.isFirstLoad then
-        local defaultCoursesImportStrings = {MountainParkourMap}
+        local defaultCoursesImportStrings = {MountainParkourMap, DescendingHyjalMap}
         for _, courseImportString in pairs(defaultCoursesImportStrings) do
             ImportAndAddToGUI(courseImportString)
         end
