@@ -2,7 +2,7 @@
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 WorldOfParkour = LibStub("AceAddon-3.0"):NewAddon("WorldOfParkour", "AceConsole-3.0", "AceTimer-3.0",
-                                                  "AceEvent-3.0", "AceHook-3.0", "AceEvent-3.0")
+                                                  "AceEvent-3.0", "AceEvent-3.0")
 function WorldOfParkour:OnInitialize()
     self.activeCourseDefaults = {
         profile = {isInEditMode = false, isActiveCourse = false, activecourse = {}, backupActivecourse = {}}
