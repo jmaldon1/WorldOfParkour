@@ -181,22 +181,23 @@ function WorldOfParkour:BackupCourseStrings()
     local savedCourses = WorldOfParkour.savedCoursesStore.savedcourses
     local backup = self.backupStore.backup
     for k, v in pairs(savedCourses) do
-        if not backup[k] then
+        local id = v.id
+        if not backup[id] then
             -- If the course doesnt exist in our backup, add it.
-            backup[k] = {
+            backup[id] = {
                 title = "",
                 lastmodifieddate = "",
                 coursestring = ""
             }
         end
         local lastModifiedDate = v.lastmodifieddate
-        local lastModifiedDateBackup = backup[k].lastmodifieddate
+        local lastModifiedDateBackup = backup[id].lastmodifieddate
 
         if lastModifiedDate ~= lastModifiedDateBackup then
             -- If the modified date has changed, update the course string.
-            backup[k].title = v.title
-            backup[k].lastmodifieddate = lastModifiedDate
-            backup[k].coursestring = self:CreateSharableString(v.compressedcoursedata)
+            backup[id].title = v.title
+            backup[id].lastmodifieddate = lastModifiedDate
+            backup[id].coursestring = self:CreateSharableString(v.compressedcoursedata)
         end
     end
 
