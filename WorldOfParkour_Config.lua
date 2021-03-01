@@ -36,7 +36,7 @@ local function createBlizzOptions()
         resetbackupbuttondesc = {
             order = 7,
             type = "description",
-            name = "\n\nI recommend not reseting the Course Backup unless absolutely necessary. " ..
+            name = "\n\nI recommend not resetting the Course Backup unless absolutely necessary. " ..
                 "This backup can be used to recover your courses in the case of addon failure and an addon reset was required. " ..
                 "\nHow to recover course strings: " .. "\n    1. Open the following path in a text editor: " ..
                 "`World of Warcraft\\_{retail, classic}_\\WTF\\Account\\{Account#}\\SavedVariables\\WorldOfParkour.lua`" ..
