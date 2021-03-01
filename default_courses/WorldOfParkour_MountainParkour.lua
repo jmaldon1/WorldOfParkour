@@ -1,5 +1,7 @@
+local _, addon = ...;
+
 -- https://onlinetexttools.com/split-text
-MountainParkourMap = table.concat({
+table.insert(addon.defaultCourses, table.concat({
     "!WOP:1!fA1xOXrryCS20A3yWKOPAH(WKAdrKKRjxsV7sq44sUyUGT3fUCXqeKK5257UDA2B3LzNnjxEqOb)dvRqjvqSpgu8pqTAvqfudQvTO(W",
     "IIABnffj(IbHsFX3Q(T7DxOxYvU3MD(M533VVFF)MzN7A(vz8C54Qo6YIdLGkyzvnDe2W3fAfvZcw6GeyAbD4Sp(UBCJJMi66T1WMxE0Vir0R(",
     "q386B2XjUjvi4Zt1zCBj1qfAyfvQUEwQ6C2HwUYKkIcCdEbQLs6fmf6mLvTaHngemKAU7B2FuvhWuxE1TLwYL6GyCtUHK07q5eirAEkVnsmZrg",
@@ -15,4 +17,4 @@ MountainParkourMap = table.concat({
     "ijtrE8Jn9yjhLC8utMmZekkjWDmOYTlXevDQTTNdZsaOalawGdXzwhoia9eosyO7EbwFD3FKCQDNf6P)UzSb6pmDaiB4bc72KvR(qhBSKKXJL(",
     "jsnz62B3Qzeszbt8fbCGXOsWQLEcEKGHosWErDzWEImy)HwUaiPymAiR9RQrfuvKmJW4s8K8W(pDyxwhCRa2tH3bxA6y2XuL85bLv52dx(PfA)",
     ")p"
-})
+}))

@@ -3,6 +3,8 @@ local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 WorldOfParkour = LibStub("AceAddon-3.0"):NewAddon("WorldOfParkour", "AceConsole-3.0", "AceTimer-3.0",
                                                   "AceEvent-3.0", "AceEvent-3.0")
+local _, addon = ...;
+
 function WorldOfParkour:OnInitialize()
     self.activeCourseDefaults = {
         profile = {isInEditMode = false, isActiveCourse = false, activecourse = {}, backupActivecourse = {}}
@@ -51,8 +53,7 @@ function WorldOfParkour:OnEnable()
     -- Load all default courses the first time the addon is opened.
     -- These will not be added again unless the user resets the addon.
     if self.firstLoadStore.isFirstLoad then
-        local defaultCoursesImportStrings = {MountainParkourMap, DescendingHyjalMap}
-        for _, courseImportString in pairs(defaultCoursesImportStrings) do
+        for _, courseImportString in pairs(addon.defaultCourses) do
             ImportAndAddToGUI(courseImportString)
         end
         self.firstLoadStore.isFirstLoad = false
@@ -184,11 +185,7 @@ function WorldOfParkour:BackupCourseStrings()
         local id = v.id
         if not backup[id] then
             -- If the course doesnt exist in our backup, add it.
-            backup[id] = {
-                title = "",
-                lastmodifieddate = "",
-                coursestring = ""
-            }
+            backup[id] = {title = "", lastmodifieddate = "", coursestring = ""}
         end
         local lastModifiedDate = v.lastmodifieddate
         local lastModifiedDateBackup = backup[id].lastmodifieddate

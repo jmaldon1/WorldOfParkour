@@ -1,5 +1,7 @@
+local _, addon = ...;
+
 -- https://onlinetexttools.com/split-text
-DescendingHyjalMap = table.concat({
+table.insert(addon.defaultCourses, table.concat({
     "!WOP:1!ns5tOXvrCCCRXOMxAXKQrrWd)AvX2dzt3T7(smxwsARDvBdLulTI)Pz2z(T7BYoV3mmZ82LxOEWExqc6bPNAU4Foiy9IqOGw9GhezWk",
     "fkTikIuTf8GhveCEVSj0cbwV9EZV53V5ZVVZ3FZo6UgJ3QfNMkSznpoY4PXnPYuTbxjCvQmwjqlYIQKYzFXqJY2zJ6363o3h9wzxVr9)41pZNV",
     "6NE1)IO18UebJBSKeko8QuIq0Kq7ycp)MlgSypPwWc0X8eEmrfSMc1gFqmXg5cw6hOcKO3C3tSOLBfO(esEIfkpFlThKXoDEfazl4eeDhpIQDx",
@@ -11,4 +13,4 @@ DescendingHyjalMap = table.concat({
     ")4kyuO3yKKBlGOuD(HMjtWsxIHgQMRSCzI6CN0s0285aITGCK1gZV(AKTmra77W(H7EE)M)9b4OsDBC)LGIrQcBRVqyHNfMBftertGECBK07uz",
     "z(AwkiyXtDSJCYzdwW35I8LY)YiK9G8XP9YzQNPA4mvRwdPtwRsnYKvz0Yt2mmS5Kvpy5NV8mTO0Q0PD7sn2H34WYrTGn1ycIXgl9py6hayEVP",
     "A8duzQkZmvLYqLYZwBMzRCGZhJwIpgju940CaPE35ry88o(qfVRE)QNARaMt7PFJLNZmh1Y7IbRXnhQ)7Ur)3p"
-})
+}))
