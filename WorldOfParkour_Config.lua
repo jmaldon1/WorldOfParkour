@@ -33,15 +33,33 @@ local function createBlizzOptions()
                 WorldOfParkour:OnInitialize()
             end
         },
-        blank__ = {order = 7, type = "description", name = "\n\n"},
-        githubheader = {order = 8, type = "header", name = "Github"},
+        resetbackupbuttondesc = {
+            order = 7,
+            type = "description",
+            name = "\n\nI recommend not reseting the Course Backup unless absolutely necessary. " ..
+                "This backup can be used to recover your courses in the case of addon failure and an addon reset was required. " ..
+                "\nHow to recover course strings: " .. "\n    1. Open the following path in a text editor: " ..
+                "`World of Warcraft\\_{retail, classic}_\\WTF\\Account\\{Account#}\\SavedVariables\\WorldOfParkour.lua`" ..
+                "\n    2. Look for a key named `WoPBackupDB` and search for course strings that you would like to recover within it."
+        },
+        resetbackupbutton = {
+            order = 8,
+            type = "execute",
+            name = "Reset WorldOfParkour Course Backup",
+            desc = "Clears the course string backup",
+            confirm = true,
+            width = "full",
+            func = function() WorldOfParkour.backupDB:ResetDB() end
+        },
+        blank__ = {order = 9, type = "description", name = "\n\n"},
+        githubheader = {order = 10, type = "header", name = "Github"},
         githubdesc = {
-            order = 9,
+            order = 11,
             name = "If you would like to see the code for those addon, report a bug, or request a feature use the following links.",
             type = "description"
         },
         githublink = {
-            order = 10,
+            order = 12,
             name = "Github",
             desc = "Addon code repository",
             type = "input",
@@ -50,7 +68,7 @@ local function createBlizzOptions()
             set = function() return WorldOfParkour.github end
         },
         githubissueslink = {
-            order = 11,
+            order = 13,
             name = "Github issues",
             desc = "Report bugs and request features",
             type = "input",

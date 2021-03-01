@@ -2,17 +2,19 @@
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 WorldOfParkour = LibStub("AceAddon-3.0"):NewAddon("WorldOfParkour", "AceConsole-3.0", "AceTimer-3.0",
-                                                  "AceEvent-3.0")
+                                                  "AceEvent-3.0", "AceHook-3.0", "AceEvent-3.0")
 function WorldOfParkour:OnInitialize()
     self.activeCourseDefaults = {
         profile = {isInEditMode = false, isActiveCourse = false, activecourse = {}, backupActivecourse = {}}
     }
     self.savedcoursesDefaults = {global = {savedcourses = {}}}
     self.firstLoadDefaults = {global = {isFirstLoad = true}}
+    self.backupDefaults = {global = {backup = {}}}
 
     self.activeCourseDB = LibStub("AceDB-3.0"):New("WoPActiveParkourCourseDB", self.activeCourseDefaults)
     self.savedCoursesDB = LibStub("AceDB-3.0"):New("WoPSavedParkourCoursesDB", self.savedcoursesDefaults)
     self.firstLoadDB = LibStub("AceDB-3.0"):New("WoPFirstLoadDB", self.firstLoadDefaults)
+    self.backupDB = LibStub("AceDB-3.0"):New("WoPBackupDB", self.backupDefaults)
 
     self.activeCourseDB.RegisterCallback(self, "OnProfileChanged", "RefreshAddon")
     self.activeCourseDB.RegisterCallback(self, "OnProfileCopied", "RefreshAddon")
@@ -21,6 +23,7 @@ function WorldOfParkour:OnInitialize()
     self.activeCourseStore = self.activeCourseDB.profile
     self.savedCoursesStore = self.savedCoursesDB.global
     self.firstLoadStore = self.firstLoadDB.global
+    self.backupStore = self.backupDB.global
 
     self.GUIoptionsDefaults = {profile = {options = self:GenerateOptions()}}
     self.GUIoptionsDB = LibStub("AceDB-3.0"):New("WoPGUIDB", self.GUIoptionsDefaults)
@@ -33,6 +36,10 @@ function WorldOfParkour:OnInitialize()
     self.importCourseString = ""
     self.github = "https://github.com/jmaldon1/WorldOfParkour"
     self.githubIssues = "https://github.com/jmaldon1/WorldOfParkour/issues"
+
+    -- Register when a player is logging out.
+    -- https://wow.gamepedia.com/PLAYER_LEAVING_WORLD
+    self:RegisterEvent("PLAYER_LEAVING_WORLD", "BackupCourseStrings")
 
     self:CreateGUI()
 end
@@ -168,6 +175,38 @@ function WorldOfParkour:GetNextUncompletedPoint()
 end
 
 function WorldOfParkour:CreateCoursePoint(uid) return {uid = uid, hint = "No hint", completed = false} end
+
+function WorldOfParkour:BackupCourseStrings()
+    -- Backup saved courses
+    local savedCourses = WorldOfParkour.savedCoursesStore.savedcourses
+    local backup = self.backupStore.backup
+    for k, v in pairs(savedCourses) do
+        if not backup[k] then
+            -- If the course doesnt exist in our backup, add it.
+            backup[k] = {
+                title = "",
+                lastmodifieddate = "",
+                coursestring = ""
+            }
+        end
+        local lastModifiedDate = v.lastmodifieddate
+        local lastModifiedDateBackup = backup[k].lastmodifieddate
+
+        if lastModifiedDate ~= lastModifiedDateBackup then
+            -- If the modified date has changed, update the course string.
+            backup[k].title = v.title
+            backup[k].lastmodifieddate = lastModifiedDate
+            backup[k].coursestring = self:CreateSharableString(v.compressedcoursedata)
+        end
+    end
+
+    -- TODO: Clean up deleted courses from the backup.
+    -- for k, _ in pairs(backup) do
+    --     if not savedCourses[k] then
+    --         backup[k] = nil
+    --     end
+    -- end
+end
 
 function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
     if self:isNotActiveCourse() then NotInActiveModeError() end
