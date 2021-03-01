@@ -36,6 +36,30 @@ local dropdown_info = {
                 local data = uid
                 TomTom:SetCrazyArrow(uid, WorldOfParkour.arrivalDistance, data.title or "TomTom waypoint")
             end
+        },
+        { -- Add previous point, can be used if the user needs to recomplete the previous point for any reason.
+            text = "Show previous point",
+            func = function()
+                -- Don't clear if we are in edit mode.
+                if WorldOfParkour:isInEditMode() then return end
+                local uid = dropdown.uid
+                local nextUncompletedPoint = WorldOfParkour:GetNextUncompletedPoint()
+                if TomTom:GetKey(uid) ~= TomTom:GetKey(nextUncompletedPoint) then
+                    error("The previous point is already shown.")
+                end
+
+                local idx = GetCoursePointIndex(uid)
+                local lastIdx = idx - 1
+                if lastIdx == 0 then error("You are already at the first point!") end
+                local activeCourse = WorldOfParkour.activeCourseStore.activecourse.course
+                local lastUid = activeCourse[lastIdx].uid
+                local m, x, y, options = WorldOfParkour:CreateTomTomWaypointArgs(lastUid)
+                local newLastUid = TomTom:AddWaypoint(m, x, y, options)
+                -- Uncomplete the last point
+                WorldOfParkour.activeCourseStore.activecourse.course[lastIdx].completed = false
+                TomTom:SetCrazyArrow(newLastUid, WorldOfParkour.arrivalDistance, newLastUid.title)
+                AceConfigRegistry:NotifyChange("WorldOfParkour")
+            end
         }, { -- Remove waypoint
             text = "Remove waypoint",
             func = function()
@@ -64,30 +88,6 @@ local dropdown_info = {
                     error("You need to be closer to complete this point.")
                 end
                 completePoint(uid)
-            end
-        },
-        { -- Add previous point, can be used if the user needs to recomplete the previous point for any reason.
-            text = "Show previous point",
-            func = function()
-                -- Don't clear if we are in edit mode.
-                if WorldOfParkour:isInEditMode() then return end
-                local uid = dropdown.uid
-                local nextUncompletedPoint = WorldOfParkour:GetNextUncompletedPoint()
-                if TomTom:GetKey(uid) ~= TomTom:GetKey(nextUncompletedPoint) then
-                    error("The previous point is already shown.")
-                end
-
-                local idx = GetCoursePointIndex(uid)
-                local lastIdx = idx - 1
-                if lastIdx == 0 then error("You are already at the first point!") end
-                local activeCourse = WorldOfParkour.activeCourseStore.activecourse.course
-                local lastUid = activeCourse[lastIdx].uid
-                local m, x, y, options = WorldOfParkour:CreateTomTomWaypointArgs(lastUid)
-                local newLastUid = TomTom:AddWaypoint(m, x, y, options)
-                -- Uncomplete the last point
-                WorldOfParkour.activeCourseStore.activecourse.course[lastIdx].completed = false
-                TomTom:SetCrazyArrow(newLastUid, WorldOfParkour.arrivalDistance, newLastUid.title)
-                AceConfigRegistry:NotifyChange("WorldOfParkour")
             end
         }, { -- Show hint
             text = "Show hint",
