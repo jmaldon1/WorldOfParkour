@@ -38,7 +38,7 @@ function WorldOfParkour:SetPoint(idx)
     local activeCourseGUI = WorldOfParkour.GUIoptionsStore.options.args.activecourse.args
     for id, _ in pairs(activeCourseGUI) do
         -- Find the active course, there will only be 1.
-        if string.match(k, uuidPattern) then ReloadPointsToGUI(id) end
+        if string.match(id, uuidPattern) then ReloadPointsToGUI(id) end
     end
 end
 
