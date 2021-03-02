@@ -1,7 +1,7 @@
 -- Add standard addon support.
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 WorldOfParkour = LibStub("AceAddon-3.0"):NewAddon("WorldOfParkour", "AceConsole-3.0", "AceTimer-3.0",
-                                                  "AceEvent-3.0", "AceEvent-3.0")
+                                                  "AceEvent-3.0")
 local _, addon = ...
 local utils = addon.utils
 local errors = addon.errors
