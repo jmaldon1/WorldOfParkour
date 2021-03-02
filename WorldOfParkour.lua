@@ -198,12 +198,12 @@ function WorldOfParkour:BackupCourseStrings()
         end
     end
 
-    -- TODO: Clean up deleted courses from the backup.
-    -- for k, _ in pairs(backup) do
-    --     if not savedCourses[k] then
-    --         backup[k] = nil
-    --     end
-    -- end
+    -- Clean up deleted courses from the backup.
+    for id, _ in pairs(backup) do
+        if not savedCourses[id] then
+            backup[id] = nil
+        end
+    end
 end
 
 function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
@@ -309,11 +309,11 @@ end
 
 function WorldOfParkour:InsertToSavedCourses(course)
     course.compressedcoursedata = self:CompressCourseData(course)
-    table.insert(WorldOfParkour.savedCoursesStore.savedcourses, course)
+    WorldOfParkour.savedCoursesStore.savedcourses[course.id] = course
 end
 
-function WorldOfParkour:ReplaceSavedCourse(course, courseKey)
-    ReplaceTable(course, WorldOfParkour.savedCoursesStore.savedcourses[courseKey])
+function WorldOfParkour:ReplaceSavedCourse(course)
+    ReplaceTable(course, WorldOfParkour.savedCoursesStore.savedcourses[course.id])
 end
 
 function WorldOfParkour:CreateWaypointDetails(idx)
@@ -398,7 +398,7 @@ local function makeUniqueCourseTitle(defaultCourseTitle)
     local getCourseTitle = function(course) return course.title end
     local savedCourses = WorldOfParkour.savedCoursesStore.savedcourses
     local allCourseTitlesArray = Map(savedCourses, getCourseTitle)
-    local allCourseTitles = ConvertArrayValsToTableKeys(allCourseTitlesArray)
+    local allCourseTitles = ConvertValsToTableKeys(allCourseTitlesArray)
     if not SetContains(allCourseTitles, defaultCourseTitle) then
         -- If the default name isn't used yet, use it.
         return defaultCourseTitle
@@ -467,17 +467,18 @@ function UUID()
     end)
 end
 
-function ConvertArrayValsToTableKeys(arr)
+function ConvertValsToTableKeys(arr)
     local t = {}
     for k, v in pairs(arr) do t[v] = k end
     return t
 end
 
-function Map(t, f)
-    local t1 = {}
-    local t_len = #t
-    for i = 1, t_len do t1[i] = f(t[i]) end
-    return t1
+function Map(tbl, f)
+    local t = {}
+    for k,v in pairs(tbl) do
+        t[k] = f(v)
+    end
+    return t
 end
 
 function Filter(tbl, func)
