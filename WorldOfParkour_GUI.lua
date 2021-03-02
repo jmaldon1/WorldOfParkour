@@ -27,10 +27,6 @@ function SetCrazyArrowToFirstOrLastPoint(option)
     end
 end
 
-function FindSavedCourseKeyById(savedCourses, id)
-    for k, v in ipairs(savedCourses) do if v.id == id then return k end end
-end
-
 local function isCoursePointsDifferent(courseAPointsDetails, courseBPointsDetails)
     if #courseAPointsDetails ~= #courseBPointsDetails then return true end
 
@@ -81,8 +77,7 @@ end
 
 local function enableEditMode(info)
     local courseId = findCourseIdRecursive(info)
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
-    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseKey].metadata
+    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseId].metadata
     local characterEditingCourse = savedCourseMetadata.characterEditingCourse
     if characterEditingCourse ~= "" then
         local coloredCharacterName = string.format("\124cFFFFF468%s\124r", characterEditingCourse)
@@ -100,16 +95,14 @@ local function enableEditMode(info)
 end
 
 local function disableEditMode(courseId)
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
-    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseKey].metadata
+    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseId].metadata
     savedCourseMetadata.characterEditingCourse = ""
     WorldOfParkour.activeCourseStore.isInEditMode = false
     SetCrazyArrowToFirstOrLastPoint("first")
 end
 
 local function enableActiveCourse(courseId)
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
-    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseKey].metadata
+    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseId].metadata
     local charactersWithCourseAsActive = savedCourseMetadata.charactersWithCourseAsActive
     local playerFullName = string.format("%s-%s", UnitFullName("player"))
     charactersWithCourseAsActive[playerFullName] = true
@@ -118,8 +111,7 @@ local function enableActiveCourse(courseId)
 end
 
 local function disableActiveCourse(courseId)
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
-    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseKey].metadata
+    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseId].metadata
     local charactersWithCourseAsActive = savedCourseMetadata.charactersWithCourseAsActive
     local playerFullName = string.format("%s-%s", UnitFullName("player"))
     charactersWithCourseAsActive[playerFullName] = nil
@@ -129,9 +121,8 @@ end
 
 local function removeCourse(info, action)
     local courseId = findCourseIdRecursive(info)
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
 
-    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseKey].metadata
+    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseId].metadata
     local charactersWithCourseAsActive = TableKeys(savedCourseMetadata.charactersWithCourseAsActive)
     if #charactersWithCourseAsActive > 0 then
         local charactersWithCourseAsActiveList = table.concat(charactersWithCourseAsActive, ", ")
@@ -140,7 +131,7 @@ local function removeCourse(info, action)
                   coloredCharacterNames)
     end
 
-    table.remove(WorldOfParkour.savedCoursesStore.savedcourses, courseKey)
+    WorldOfParkour.savedCoursesStore.savedcourses[courseId] = nil
     WorldOfParkour.GUIoptionsStore.options.args.courselist.args[courseId] = nil
 end
 
@@ -204,7 +195,6 @@ local function unsetActiveCourse(info)
     local courseId = findCourseIdRecursive(info)
     local activeCourse = WorldOfParkour.activeCourseStore.activecourse
     local backupActiveCourse = WorldOfParkour.activeCourseStore.backupActivecourse
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
     -- Remove waypoints from screen.
     WorldOfParkour:RemoveAllTomTomWaypoints()
 
@@ -214,7 +204,7 @@ local function unsetActiveCourse(info)
     local isCourseDiff = isCourseDifferent(activeCourse, backupActiveCourse)
     if isCourseDiff then updateCourse() end
     -- Replace the old course with the active course.
-    WorldOfParkour:ReplaceSavedCourse(activeCourse, courseKey)
+    WorldOfParkour:ReplaceSavedCourse(activeCourse)
 
     -- Clear some state
     WorldOfParkour.GUIoptionsStore.options.args.activecourse.args[courseId] = nil
@@ -227,8 +217,7 @@ end
 
 local function getCourseTitle(info)
     local courseId = findCourseIdRecursive(info)
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
-    local course = WorldOfParkour.savedCoursesStore.savedcourses[courseKey]
+    local course = WorldOfParkour.savedCoursesStore.savedcourses[courseId]
     local title = course.title
     if course.metadata.isComplete and not isCourseActive(courseId) then
         return addCompletedTitleColor(title)
@@ -238,8 +227,7 @@ end
 
 local function getCourseDescription(info)
     local courseId = findCourseIdRecursive(info)
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
-    return WorldOfParkour.savedCoursesStore.savedcourses[courseKey].description
+    return WorldOfParkour.savedCoursesStore.savedcourses[courseId].description
 end
 
 local function validateCourseTitle(info, val)
@@ -274,12 +262,11 @@ local function displayMatchingCourses(courseStartsWith)
     -- Hide courses that do not match the search criteria
     local uuidPattern = "%w+-%w+-4%w+-%w+-%w+"
     local courseList = WorldOfParkour.GUIoptionsStore.options.args.courselist.args
-    for k, v in pairs(courseList) do
+    for id, v in pairs(courseList) do
         -- Only check courses (We know its a course by the pattern of their table key)
-        if string.match(k, uuidPattern) then
+        if string.match(id, uuidPattern) then
             local savedCourses = WorldOfParkour.savedCoursesStore.savedcourses
-            local courseKey = FindSavedCourseKeyById(savedCourses, k)
-            local courseName = savedCourses[courseKey].title
+            local courseName = savedCourses[id].title
             local lowerCourseName = string.lower(courseName)
             local lowerCourseStartsWith = string.lower(courseStartsWith)
             v.hidden = false
@@ -425,8 +412,7 @@ end
 
 local function getCourseDifficultyDisplay(info)
     local courseId = findCourseIdRecursive(info)
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
-    local difficulty = WorldOfParkour.savedCoursesStore.savedcourses[courseKey].difficulty
+    local difficulty = WorldOfParkour.savedCoursesStore.savedcourses[courseId].difficulty
     local colorMap = {Easy = "\124cFF00FF00", Medium = "\124cFFFFFF00", Hard = "\124cFFFF0000"}
 
     return "Difficulty: " .. string.format("%s%s\124r", colorMap[difficulty], difficulty)
@@ -440,8 +426,7 @@ end
 
 local function getSavedCourseCompletion(info)
     local courseId = findCourseIdRecursive(info)
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
-    local course = WorldOfParkour.savedCoursesStore.savedcourses[courseKey].course
+    local course = WorldOfParkour.savedCoursesStore.savedcourses[courseId].course
     return WorldOfParkour:GetCourseCompletion(course)
 end
 
@@ -453,8 +438,7 @@ end
 
 local function getWoWPatch(info)
     local courseId = findCourseIdRecursive(info)
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
-    local lastModifiedDate = WorldOfParkour.savedCoursesStore.savedcourses[courseKey].lastmodifieddate
+    local lastModifiedDate = WorldOfParkour.savedCoursesStore.savedcourses[courseId].lastmodifieddate
     return string.format("\124cFFFFFF00Last modified date: %s\124r", lastModifiedDate)
 end
 
@@ -651,7 +635,6 @@ end
 function ExitWithSave(info)
     local courseId = findCourseIdRecursive(info)
     local activeCourse = WorldOfParkour.activeCourseStore.activecourse
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
     local backupActiveCourse = WorldOfParkour.activeCourseStore.backupActivecourse
     local isCourseDiff = isCourseDifferent(activeCourse, backupActiveCourse)
     if isCourseDiff then updateCourse() end
@@ -660,7 +643,7 @@ function ExitWithSave(info)
     local activeCourseCopyTwo = Deepcopy(activeCourse)
 
     -- Replace the old course with the active course.
-    WorldOfParkour:ReplaceSavedCourse(activeCourseCopyOne, courseKey)
+    WorldOfParkour:ReplaceSavedCourse(activeCourseCopyOne)
     -- Update the backup
     ReplaceTable(activeCourseCopyTwo, backupActiveCourse)
 
@@ -669,8 +652,7 @@ end
 
 local function setActiveCourse(info, action)
     local courseId = findCourseIdRecursive(info)
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
-    local savedCourse = WorldOfParkour.savedCoursesStore.savedcourses[courseKey]
+    local savedCourse = WorldOfParkour.savedCoursesStore.savedcourses[courseId]
 
     -- We need to make copies here because Lua passes around tables as reference.
     -- We do not want to edit the original table.
@@ -703,8 +685,7 @@ end
 
 local function getSharableString(info)
     local courseId = findCourseIdRecursive(info)
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
-    local savedCourse = WorldOfParkour.savedCoursesStore.savedcourses[courseKey]
+    local savedCourse = WorldOfParkour.savedCoursesStore.savedcourses[courseId]
     return WorldOfParkour:CreateSharableString(savedCourse.compressedcoursedata)
 end
 
@@ -810,8 +791,7 @@ end
 
 function CopyCourse(info)
     local courseId = findCourseIdRecursive(info)
-    local courseKey = FindSavedCourseKeyById(WorldOfParkour.savedCoursesStore.savedcourses, courseId)
-    local savedCourse = WorldOfParkour.savedCoursesStore.savedcourses[courseKey]
+    local savedCourse = WorldOfParkour.savedCoursesStore.savedcourses[courseId]
     local savedCourseCopy = Deepcopy(savedCourse)
     -- New UUID because we just made a copy of an existing course.
     local uuid = UUID()
@@ -921,8 +901,8 @@ function WorldOfParkour:GenerateOptions()
     }
 
     -- Load stored courses.
-    for _, v in pairs(self.savedCoursesStore.savedcourses) do
-        options.args.courselist.args[v.id] = createSavedCourseGUI()
+    for id, _ in pairs(self.savedCoursesStore.savedcourses) do
+        options.args.courselist.args[id] = createSavedCourseGUI()
     end
 
     return options
