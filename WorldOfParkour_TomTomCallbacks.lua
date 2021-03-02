@@ -80,7 +80,7 @@ local dropdown_info = {
             text = "Complete point",
             func = function()
                 -- Don't clear if we are in edit mode.
-                if WorldOfParkour:isInEditMode() then return end
+                if WorldOfParkour:isInEditMode() then error("You can't do this in edit mode.") end
 
                 local uid = dropdown.uid
                 -- Dont clear if it is not the next waypoint.
