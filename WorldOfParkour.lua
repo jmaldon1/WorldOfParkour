@@ -181,8 +181,7 @@ function WorldOfParkour:BackupCourseStrings()
     -- Backup saved courses
     local savedCourses = WorldOfParkour.savedCoursesStore.savedcourses
     local backup = self.backupStore.backup
-    for k, v in pairs(savedCourses) do
-        local id = v.id
+    for id, v in pairs(savedCourses) do
         if not backup[id] then
             -- If the course doesnt exist in our backup, add it.
             backup[id] = {title = "", lastmodifieddate = "", coursestring = ""}
