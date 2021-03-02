@@ -46,7 +46,7 @@ local dropdown_info = {
             text = "Show previous point",
             func = function()
                 -- Don't clear if we are in edit mode.
-                if WorldOfParkour:isInEditMode() then return end
+                if WorldOfParkour:isInEditMode() then error("You can't do this in edit mode.") end
                 local uid = dropdown.uid
                 local nextUncompletedPoint = WorldOfParkour:GetNextUncompletedPoint()
                 if TomTom:GetKey(uid) ~= TomTom:GetKey(nextUncompletedPoint) then
