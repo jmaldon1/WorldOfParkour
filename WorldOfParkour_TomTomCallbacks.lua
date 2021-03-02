@@ -1,6 +1,7 @@
 local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 local _, addon = ...
 local utils = addon.utils
+local errors = addon.errors
 
 --[[-------------------------------------------------------------------
 --  Dropdown menu code
@@ -35,7 +36,7 @@ local dropdown_info = {
             -- set as crazy arrow
             text = "Set as waypoint arrow",
             func = function()
-                if WorldOfParkour:isNotInEditMode() then NotInEditModeError() end
+                if WorldOfParkour:isNotInEditMode() then errors.notInEditModeError() end
                 local uid = dropdown.uid
                 local data = uid
                 TomTom:SetCrazyArrow(uid, WorldOfParkour.arrivalDistance, data.title or "TomTom waypoint")
@@ -67,7 +68,7 @@ local dropdown_info = {
         }, { -- Remove waypoint
             text = "Remove waypoint",
             func = function()
-                if WorldOfParkour:isNotInEditMode() then NotInEditModeError() end
+                if WorldOfParkour:isNotInEditMode() then errors.notInEditModeError() end
                 local uid = dropdown.uid
                 WorldOfParkour:RemoveWaypointAndReorder(uid)
                 AceConfigRegistry:NotifyChange("WorldOfParkour")
