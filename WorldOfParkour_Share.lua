@@ -1,5 +1,7 @@
 local LibDeflate = LibStub:GetLibrary("LibDeflate")
 local LibSerialize = LibStub("LibSerialize")
+local _, addon = ...
+local utils = addon.utils
 
 function WorldOfParkour:CompressCourseData(savedCourse)
     -- These are keys we don't want in our compressed data.
@@ -7,7 +9,7 @@ function WorldOfParkour:CompressCourseData(savedCourse)
     local savedCourseCopy = {}
 
     for k, v in pairs(savedCourse) do
-        if not SetContains(keysToSkip, k) then
+        if not utils.setContains(keysToSkip, k) then
             savedCourseCopy[k] = v
         end
     end

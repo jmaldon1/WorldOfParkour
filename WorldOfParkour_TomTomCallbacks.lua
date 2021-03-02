@@ -1,10 +1,14 @@
+local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
+local _, addon = ...
+local utils = addon.utils
+
 --[[-------------------------------------------------------------------
 --  Dropdown menu code
 -------------------------------------------------------------------]] --
 local dropdown = CreateFrame("Frame", "TomTomDropdown", nil, "UIDropDownMenuTemplate")
 
 local function completePoint(uid)
-    local idx = GetCoursePointIndex(uid)
+    local idx = utils.getCoursePointIndex(uid)
     local activeCourse = WorldOfParkour.activeCourseStore.activecourse.course
     activeCourse[idx].completed = true
     -- Check if the user is at the last point in the course.
@@ -48,7 +52,7 @@ local dropdown_info = {
                     error("The previous point is already shown.")
                 end
 
-                local idx = GetCoursePointIndex(uid)
+                local idx = utils.getCoursePointIndex(uid)
                 local lastIdx = idx - 1
                 if lastIdx == 0 then error("You are already at the first point!") end
                 local activeCourse = WorldOfParkour.activeCourseStore.activecourse.course
@@ -94,7 +98,7 @@ local dropdown_info = {
             func = function()
                 local uid = dropdown.uid
                 local title = uid.title
-                local idx = GetCoursePointIndex(uid)
+                local idx = utils.getCoursePointIndex(uid)
                 local coursePoint = WorldOfParkour.activeCourseStore.activecourse.course[idx]
                 WorldOfParkour:Printf("Hint for %s: %s", title, coursePoint.hint)
             end

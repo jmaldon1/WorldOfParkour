@@ -1,15 +1,19 @@
+local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
+local _, addon = ...
+local errors = addon.errors
+
 --[[-------------------------------------------------------------------
 --  Define Slash commands
 -------------------------------------------------------------------]] --
 local function setPointCmd()
-    if WorldOfParkour:isNotActiveCourse() then NotInActiveModeError() end
-    SetPoint()
+    if WorldOfParkour:isNotActiveCourse() then errors.notInActiveModeError() end
+    WorldOfParkour:SetPoint()
     -- Notify changes to GUI
     AceConfigRegistry:NotifyChange("WorldOfParkour")
 end
 
 local function setPointAfterCmd(args)
-    if WorldOfParkour:isNotActiveCourse() then NotInActiveModeError() end
+    if WorldOfParkour:isNotActiveCourse() then errors.notInActiveModeError() end
     local afterIdx = WorldOfParkour:GetArgs(args, 1)
     if not afterIdx then error("setPointAfterCmd(args): Point index is required.") end
 
@@ -18,12 +22,12 @@ local function setPointAfterCmd(args)
         error("Input to /setpointafter must be a number. " .. "'" .. afterIdx .. "'" .. " is not a number.")
     end
 
-    SetPoint(tonumber(afterIdx) + 1)
+    WorldOfParkour:SetPoint(tonumber(afterIdx) + 1)
     -- Notify changes to GUI
     AceConfigRegistry:NotifyChange("WorldOfParkour")
 end
 
-function SetPoint(idx)
+function WorldOfParkour:SetPoint(idx)
     -- Default idx to the next available waypoint position.
     idx = idx or #WorldOfParkour.activeCourseStore.activecourse.course + 1
 
@@ -32,9 +36,9 @@ function SetPoint(idx)
     -- Add point to GUI
     local uuidPattern = "%w+-%w+-4%w+-%w+-%w+"
     local activeCourseGUI = WorldOfParkour.GUIoptionsStore.options.args.activecourse.args
-    for k, _ in pairs(activeCourseGUI) do
+    for id, _ in pairs(activeCourseGUI) do
         -- Find the active course, there will only be 1.
-        if string.match(k, uuidPattern) then ReloadPointsToGUI(k) end
+        if string.match(k, uuidPattern) then ReloadPointsToGUI(id) end
     end
 end
 

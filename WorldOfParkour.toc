@@ -24,6 +24,8 @@ libs\AceTimer-3.0\AceTimer-3.0.xml
 libs\AceEvent-3.0\AceEvent-3.0.xml
 
 # Source
+WorldOfParkour_Utils.lua
+WorldOfParkour_Errors.lua
 WorldOfParkour.lua
 WorldOfParkour_Share.lua
 WorldOfParkour_Config.lua
