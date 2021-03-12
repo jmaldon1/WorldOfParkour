@@ -19,7 +19,7 @@ externals:
         tag: latest
 
 ignore:
-    - media
+    - docs
     - README.md
     - README.wowace.md
     - generate_changelog.sh
