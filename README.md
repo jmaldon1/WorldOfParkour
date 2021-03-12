@@ -39,7 +39,7 @@ Simply pick a course from the `All Courses` tab and set it as the `Active Course
 
 Below is a short gif creating a simple parkour course.
 
-![course creation](./media/course_creation.gif "Course Creation")
+![course creation](./docs/media/course_creation.gif "Course Creation")
 
 # Course Sharing
 
@@ -47,13 +47,13 @@ Below is a short gif creating a simple parkour course.
 
     Press the `Show sharable course string` toggle. Copy and paste the string to your friends.
 
-    ![course share](./media/show_course_share.png "Course Share")
+    ![course share](./docs/media/show_course_share.png "Course Share")
 
 2. Importing a Course
 
     Press the `All Courses` tab and paste the course string into the `Import course` input box.
 
-    ![course import](./media/import_course_share.png "Course Import")
+    ![course import](./docs/media/import_course_share.png "Course Import")
 
 
 # Commands
