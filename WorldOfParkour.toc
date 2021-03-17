@@ -37,3 +37,4 @@ WorldOfParkour_GUI.lua
 default_courses\WorldOfParkour_DefaultCourses.lua
 default_courses\WorldOfParkour_MountainParkour.lua
 default_courses\WorldOfParkour_DescendingHyjal.lua
+default_courses\WorldOfParkour_Silvermoon_City_Heights.lua
