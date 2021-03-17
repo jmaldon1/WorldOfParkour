@@ -15,11 +15,12 @@ end
 local function setPointAfterCmd(args)
     if WorldOfParkour:isNotActiveCourse() then errors.notInActiveModeError() end
     local afterIdx = WorldOfParkour:GetArgs(args, 1)
-    if not afterIdx then error("setPointAfterCmd(args): Point index is required.") end
+    if not afterIdx then WorldOfParkour:Error("setPointAfterCmd(args): Point index is required.") end
 
     -- Input must be a number
     if not tonumber(afterIdx) then
-        error("Input to /setpointafter must be a number. " .. "'" .. afterIdx .. "'" .. " is not a number.")
+        WorldOfParkour:Error("Input to /setpointafter must be a number. " .. "'" .. afterIdx .. "'" ..
+                                 " is not a number.")
     end
 
     WorldOfParkour:SetPoint(tonumber(afterIdx) + 1)

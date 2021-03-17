@@ -50,12 +50,12 @@ local dropdown_info = {
                 local uid = dropdown.uid
                 local nextUncompletedPoint = WorldOfParkour:GetNextUncompletedPoint()
                 if TomTom:GetKey(uid) ~= TomTom:GetKey(nextUncompletedPoint) then
-                    error("The previous point is already shown.")
+                    WorldOfParkour:Error("The previous point is already shown.")
                 end
 
                 local idx = utils.getCoursePointIndex(uid)
                 local lastIdx = idx - 1
-                if lastIdx == 0 then error("You are already at the first point!") end
+                if lastIdx == 0 then WorldOfParkour:Error("You are already at the first point!") end
                 local activeCourse = WorldOfParkour.activeCourseStore.activecourse.course
                 local lastUid = activeCourse[lastIdx].uid
                 local m, x, y, options = WorldOfParkour:CreateTomTomWaypointArgs(lastUid)
@@ -86,11 +86,11 @@ local dropdown_info = {
                 -- Dont clear if it is not the next waypoint.
                 local nextUncompletedPoint = WorldOfParkour:GetNextUncompletedPoint()
                 if TomTom:GetKey(uid) ~= TomTom:GetKey(nextUncompletedPoint) then
-                    error("Complete the previous points first.")
+                    WorldOfParkour:Error("Complete the previous points first.")
                 end
 
                 if TomTom:GetDistanceToWaypoint(uid) > WorldOfParkour.arrivalDistance then
-                    error("You need to be closer to complete this point.")
+                    WorldOfParkour:Error("You need to be closer to complete this point.")
                 end
                 completePoint(uid)
             end
