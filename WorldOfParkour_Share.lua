@@ -3,19 +3,23 @@ local LibSerialize = LibStub("LibSerialize")
 local _, addon = ...
 local utils = addon.utils
 
-function WorldOfParkour:CompressCourseData(savedCourse)
-    -- These are keys we don't want in our compressed data.
+local function removeCertainKeysFromCourseDetails(courseDetails)
     local keysToSkip = {compressedcoursedata = true}
-    local savedCourseCopy = {}
+    local courseDetailsTrimmed = {}
 
-    for k, v in pairs(savedCourse) do
-        if not utils.setContains(keysToSkip, k) then
-            savedCourseCopy[k] = v
-        end
+    for k, v in pairs(courseDetails) do
+        if not utils.setContains(keysToSkip, k) then courseDetailsTrimmed[k] = v end
     end
+    return courseDetailsTrimmed
+end
+
+function WorldOfParkour:CompressCourseData(savedCourseDetails)
+    -- These are keys we don't want in our compressed data.
+    local savedCourseDetailsTrimmed = removeCertainKeysFromCourseDetails(savedCourseDetails)
+
     local configForLS = {errorOnUnserializableType = false}
     -- Serialize
-    local serializedCourse = LibSerialize:SerializeEx(configForLS, savedCourseCopy)
+    local serializedCourse = LibSerialize:SerializeEx(configForLS, savedCourseDetailsTrimmed)
     -- Compress
     return LibDeflate:CompressDeflate(serializedCourse)
 end
@@ -27,25 +31,35 @@ function WorldOfParkour:CreateSharableString(compressedCourseData)
 end
 
 local function compareTableTypes(tableA, tableB)
-    local errMsg = "compareTableTypes: Bad Import"
+    local errMsg = "compareTableTypes: Bad Import, "
     for k, _ in pairs(tableA) do
         if tableB[k] == nil then
             -- Additional field found.
-            error(errMsg)
+            WorldOfParkour:Error(errMsg .. "additional field found.")
         end
         if type(tableA[k]) ~= type(tableB[k]) then
             -- Types don't match.
-            error(errMsg)
+            WorldOfParkour:Error(errMsg .. "type mismatch.")
+        end
+    end
+
+    for k, _ in pairs(tableB) do
+        if tableA[k] == nil then
+            -- Missing field.
+            WorldOfParkour:Error(errMsg .. "missing field.")
         end
     end
 end
 
 local function validateDeserializedData(deserializedResults)
     -- We need to make sure the deserialized data isn't going to break our addon...
-    if type(deserializedResults) ~= "table" then error("validateDeserializedData: Invalid import data.") end
+    if type(deserializedResults) ~= "table" then
+        WorldOfParkour:Error("validateDeserializedData: Invalid import data.")
+    end
     -- Check if the course keys are correct.
-    local newCourse = WorldOfParkour:NewCourseDefaults()
-    compareTableTypes(deserializedResults, newCourse)
+    local newCourseDetails = WorldOfParkour:NewCourseDefaults()
+    local newCourseDetailsTrimmed = removeCertainKeysFromCourseDetails(newCourseDetails)
+    compareTableTypes(deserializedResults, newCourseDetailsTrimmed)
 
     -- Check if the point keys are correct.
     local newCoursePoint = WorldOfParkour:CreateCoursePoint({})
@@ -63,17 +77,17 @@ function WorldOfParkour:ImportSharableString(sharableCourseString)
     if encodeVersion then
         encodeVersion = tonumber(string.match(encodeVersion, "%d+"))
     else
-        error("ImportSharableString: Bad import string.")
+        WorldOfParkour:Error("ImportSharableString: Bad import string.")
     end
 
     -- Decode
     local compress_deflate = LibDeflate:DecodeForPrint(encoded)
     -- Decompress
     local decompress_deflate = LibDeflate:DecompressDeflate(compress_deflate)
-    if decompress_deflate == nil then error("LibDeflate: Decompression failed.") end
+    if decompress_deflate == nil then WorldOfParkour:Error("LibDeflate: Decompression failed.") end
     -- Deserialize
     local isSuccess, deserializedResults = LibSerialize:Deserialize(decompress_deflate)
-    if not isSuccess then error("LibSerialize: Error deserializing " .. deserializedResults) end
+    if not isSuccess then WorldOfParkour:Error("LibSerialize: Error deserializing " .. deserializedResults) end
     local courseDetails = validateDeserializedData(deserializedResults)
 
     -- Pick what data we want imported over from the old course.
@@ -84,6 +98,9 @@ function WorldOfParkour:ImportSharableString(sharableCourseString)
     newSavedCourse.difficulty = courseDetails.difficulty
     newSavedCourse.lastmodifieddate = courseDetails.lastmodifieddate
     newSavedCourse.compressedcoursedata = WorldOfParkour:CompressCourseData(newSavedCourse)
+    -- There may exist old courses that do not have this data, so we default to empty string.
+    newSavedCourse.wowversion = courseDetails.wowversion or ""
+    newSavedCourse.creator = courseDetails.creator or ""
 
     WorldOfParkour:ResetCourseCompletion(newSavedCourse)
 

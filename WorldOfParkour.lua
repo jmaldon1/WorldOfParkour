@@ -68,8 +68,7 @@ end
 local origHandler = geterrorhandler()
 
 local function OnErrorHandler(msg)
-    local err = "\124cFFFF0000Error: \124r"
-    WorldOfParkour:Print(err .. msg)
+    -- print(msg)
     return origHandler(msg)
 end
 seterrorhandler(OnErrorHandler)
@@ -86,6 +85,12 @@ function WorldOfParkour:RefreshAddon()
     -- TODO: Possibly do this without closing the window and just update the GUI.
     AceConfigDialog:Close("WorldOfParkour")
     WorldOfParkour:OnInitialize()
+end
+
+function WorldOfParkour:Error(msg)
+    local err = "\124cFFFF0000Error: \124r"
+    WorldOfParkour:Print(err .. msg)
+    error(msg)
 end
 
 function WorldOfParkour:isActiveCourse() return self.activeCourseStore.isActiveCourse end
@@ -124,7 +129,7 @@ function WorldOfParkour:IsSyncedWithTomTomDB()
     if #self.activeCourseStore.activecourse.course == 0 then
         -- If there are 0 points in the our course, it is not possible to determine
         -- if we are synced with TomTom's DB or not. So we throw.
-        error("Unable to determine if we are synced with TomTomDB...")
+        WorldOfParkour:Error("Unable to determine if we are synced with TomTomDB...")
     end
     for _, coursePoint in ipairs(self.activeCourseStore.activecourse.course) do
         if not TomTom:IsValidWaypoint(coursePoint.uid) then
@@ -203,7 +208,7 @@ function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
     if self:isNotInEditMode() then errors.notInEditModeError() end
     if #self.activeCourseStore.activecourse.course >= 1000 then
         -- Hard limit on course points, just in case.
-        error("Max point limit reached.")
+        WorldOfParkour:Error("Max point limit reached.")
     end
 
     local nextAvailablePointIdxBeforeSync = #self.activeCourseStore.activecourse.course + 1
@@ -221,17 +226,17 @@ function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
 
     local nextAvailablePointIdxAfterSync = #self.activeCourseStore.activecourse.course + 1
 
-    if type(idx) ~= "number" then error("SetWaypointAtIndexOnCurrentPosition(idx): idx is not a number."); end
+    if type(idx) ~= "number" then WorldOfParkour:Error("SetWaypointAtIndexOnCurrentPosition(idx): idx is not a number."); end
 
     if idx <= 0 or idx > nextAvailablePointIdxAfterSync then
-        error("Point index out of range. " .. "The next point you can create is " .. "'" ..
+        WorldOfParkour:Error("Point index out of range. " .. "The next point you can create is " .. "'" ..
                   nextAvailablePointIdxAfterSync .. "'.");
     end
 
     -- Create the waypoint
     local mapID, x, y, opts = unpack(self:CreateWaypointDetails(idx))
     if TomTom:WaypointExists(mapID, x, y, opts.title) then
-        error("This point already exists, try moving from this spot.")
+        WorldOfParkour:Error("This point already exists, try moving from this spot.")
     end
 
     local uid = TomTom:AddWaypoint(mapID, x, y, opts)
@@ -250,7 +255,7 @@ function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
 end
 
 function WorldOfParkour:RemoveWaypointAndReorder(uid)
-    if type(uid) ~= "table" then error("RemoveWaypoint(uid) UID is not a table."); end
+    if type(uid) ~= "table" then WorldOfParkour:Error("RemoveWaypoint(uid) UID is not a table."); end
     local idx = utils.getCoursePointIndex(uid)
     self:RemoveWaypoint(uid)
 
@@ -356,7 +361,7 @@ function WorldOfParkour:ReloadActiveCourse()
         local m, x, y, options = self:CreateTomTomWaypointArgs(uid)
 
         local isSuccess, results = pcall(utils.bind(TomTom, "AddWaypoint"), m, x, y, options)
-        if not isSuccess then error("This course is invalid, please delete it.") end
+        if not isSuccess then WorldOfParkour:Error("This course is invalid, please delete it.") end
 
         local updatedUid = results
         if coursePoint.completed == true then
@@ -414,13 +419,15 @@ end
 
 function WorldOfParkour:NewCourseDefaults()
     return {
-        -- While unique course titles are not required, but it makes readability easier.
+        -- While unique course titles are not required, it makes readability easier.
         title = makeUniqueCourseTitle("New Parkour Course"),
         description = "Description of course",
         id = utils.UUID(),
         course = {},
         difficulty = "Easy",
         lastmodifieddate = date("%m/%d/%y %H:%M:%S"),
+        creator = string.format("%s-%s", UnitFullName("player")),
+        wowversion = (select(1, GetBuildInfo())),
         compressedcoursedata = "",
         -- We will clear this metadata on copy or import.
         metadata = self:CreateNewCourseMetadata()

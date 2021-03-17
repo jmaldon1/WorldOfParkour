@@ -11,7 +11,7 @@ local errors = addon.errors
 local function findCourseIdRecursive(info, level)
     level = level or 0
     local levelName = info[#info - level]
-    if not levelName then error("Couldn't find ID") end
+    if not levelName then WorldOfParkour:Error("Couldn't find ID") end
     local uuidPattern = "%w+-%w+-4%w+-%w+-%w+"
     if string.match(levelName, uuidPattern) then return levelName end
     return findCourseIdRecursive(info, level + 1)
@@ -26,7 +26,7 @@ function SetCrazyArrowToFirstOrLastPoint(option)
     elseif option == "last" then
         TomTom:SetCrazyArrow(course[#course].uid, WorldOfParkour.arrivalDistance, course[#course].uid.title)
     else
-        error("Input must be either {'first', 'last'}")
+        WorldOfParkour:Error("Input must be either {'first', 'last'}")
     end
 end
 
@@ -87,7 +87,7 @@ local function enableEditMode(info)
         local errMsg = string.format(
                            "This course is already editing by '%s', you must exit editing mode on that character to edit this course.",
                            coloredCharacterName)
-        error(errMsg)
+        WorldOfParkour:Error(errMsg)
     end
     savedCourseMetadata.characterEditingCourse = string.format("%s-%s", UnitFullName("player"))
 
@@ -130,8 +130,8 @@ local function removeCourse(info, action)
     if #charactersWithCourseAsActive > 0 then
         local charactersWithCourseAsActiveList = table.concat(charactersWithCourseAsActive, ", ")
         local coloredCharacterNames = string.format("\124cFFFFF468%s\124r", charactersWithCourseAsActiveList)
-        error("Unset this course as active from the following characters before removing: " ..
-                  coloredCharacterNames)
+        WorldOfParkour:Error("Unset this course as active from the following characters before removing: " ..
+                                 coloredCharacterNames)
     end
 
     WorldOfParkour.savedCoursesStore.savedcourses[courseId] = nil
@@ -190,7 +190,10 @@ end
 local function updateCourse()
     local activeCourse = WorldOfParkour.activeCourseStore.activecourse
     -- Update the active course if things changed.
-    activeCourse.lastmodifieddate = date("%m/%d/%y %H:%M:%S")
+    local newCourseDefaults = WorldOfParkour:NewCourseDefaults()
+    activeCourse.lastmodifieddate = newCourseDefaults.lastmodifieddate
+    activeCourse.wowversion = newCourseDefaults.wowversion
+    activeCourse.creator = newCourseDefaults.creator
     activeCourse.compressedcoursedata = WorldOfParkour:CompressCourseData(activeCourse)
 end
 
@@ -439,10 +442,22 @@ local function isCourseCompletionResetDisabled()
     return WorldOfParkour:IsCourseNotBeingRun(course)
 end
 
-local function getWoWPatch(info)
+local function getLastModifiedDate(info)
     local courseId = findCourseIdRecursive(info)
     local lastModifiedDate = WorldOfParkour.savedCoursesStore.savedcourses[courseId].lastmodifieddate
     return string.format("\124cFFFFFF00Last modified date: %s\124r", lastModifiedDate)
+end
+
+local function getWoWVersion(info)
+    local courseId = findCourseIdRecursive(info)
+    local wowVersion = WorldOfParkour.savedCoursesStore.savedcourses[courseId].wowversion or ""
+    return string.format("\124cFFFFFF00WoW version: %s\124r", wowVersion)
+end
+
+local function getCreator(info)
+    local courseId = findCourseIdRecursive(info)
+    local creator = WorldOfParkour.savedCoursesStore.savedcourses[courseId].creator or ""
+    return string.format("\124cFFFFFF00Creator: %s\124r", creator)
 end
 
 local function courseResetButtonFn()
@@ -515,8 +530,11 @@ createActiveCourseGUI = function()
                     difficulty = {order = 2, name = getCourseDifficultyDisplay, type = "description"},
                     blank = {order = 3, type = "description", name = "\n"},
                     description = {order = 4, type = "description", name = getCourseDescription},
-                    wowpatch = {order = 5, type = "description", name = getWoWPatch},
-                    blank_ = {order = 6, type = "description", name = "\n\n"},
+                    blank__ = {order = 5, type = "description", name = "\n"},
+                    lastmodifieddate = {order = 6, type = "description", name = getLastModifiedDate},
+                    wowversion = {order = 7, type = "description", name = getWoWVersion},
+                    creator = {order = 8, type = "description", name = getCreator},
+                    blank___ = {order = 9, type = "description", name = "\n\n"},
                     range = {
                         name = "Course Completion",
                         desc = "complete",
@@ -526,17 +544,17 @@ createActiveCourseGUI = function()
                         max = 1,
                         disabled = true,
                         isPercent = true,
-                        order = 7,
+                        order = 10,
                         get = getActiveCourseCompletion
                     },
-                    blank__ = {order = 8, type = "description", name = "\n"},
+                    blank____ = {order = 11, type = "description", name = "\n"},
                     unsetactivecourse = {
                         name = "Unset Active Course",
                         desc = "Remove this course from Active Course." ..
                             "\n\nIf you edited this course, this will save your changes.",
                         type = "execute",
                         width = "full",
-                        order = 9,
+                        order = 12,
                         func = unsetActiveCourse
                     }
                 }
@@ -676,7 +694,7 @@ local function setActiveCourse(info, action)
             disableActiveCourse(courseId)
             WorldOfParkour.activeCourseStore.activecourse = {}
             WorldOfParkour.activeCourseStore.backupActivecourse = {}
-            error(err)
+            WorldOfParkour:Error(err)
         end
     end
 
@@ -720,10 +738,13 @@ local function copyCourse(info)
     local savedCourse = WorldOfParkour.savedCoursesStore.savedcourses[courseId]
     local savedCourseCopy = utils.deepcopy(savedCourse)
     -- New UUID because we just made a copy of an existing course.
-    local uuid = utils.UUID()
+    local newCourseDefaults = WorldOfParkour:NewCourseDefaults()
+    local uuid = newCourseDefaults.id
     savedCourseCopy.id = uuid
     savedCourseCopy.title = savedCourseCopy.title .. " Copy"
-    savedCourseCopy.lastmodifieddate = date("%m/%d/%y %H:%M:%S")
+    savedCourseCopy.creator = newCourseDefaults.creator
+    savedCourseCopy.wowversion = newCourseDefaults.wowversion
+    savedCourseCopy.lastmodifieddate = newCourseDefaults.lastmodifieddate
     -- Reset metadata
     savedCourseCopy.metadata = WorldOfParkour:CreateNewCourseMetadata()
     WorldOfParkour:ResetCourseCompletion(savedCourseCopy)
@@ -747,8 +768,11 @@ createSavedCourseGUI = function()
             difficulty = {order = 2, name = getCourseDifficultyDisplay, type = "description"},
             blank = {order = 3, type = "description", name = "\n"},
             description = {name = getCourseDescription, type = "description", order = 4},
-            wowpatch = {order = 5, type = "description", name = getWoWPatch},
-            blank_ = {order = 6, type = "description", name = "\n\n"},
+            blank_ = {order = 5, type = "description", name = "\n"},
+            lastmodifieddate = {order = 6, type = "description", name = getLastModifiedDate},
+            wowversion = {order = 7, type = "description", name = getWoWVersion},
+            creator = {order = 8, type = "description", name = getCreator},
+            blank__ = {order = 9, type = "description", name = "\n\n"},
             range = {
                 name = "Course Completion",
                 desc = "complete",
@@ -758,11 +782,11 @@ createSavedCourseGUI = function()
                 max = 1,
                 disabled = true,
                 isPercent = true,
-                order = 7,
+                order = 10,
                 get = getSavedCourseCompletion
             },
-            blank__ = {order = 8, type = "description", name = "\n\n"},
-            options = {name = "Options", type = "header", order = 9},
+            blank___ = {order = 11, type = "description", name = "\n\n"},
+            options = {name = "Options", type = "header", order = 12},
             setactivecourse = {
                 name = "Set As Active Course",
                 desc = "Set this course as active to run or edit the course.",
@@ -770,18 +794,18 @@ createSavedCourseGUI = function()
                 width = "full",
                 disabled = utils.bind(WorldOfParkour, "isActiveCourse"),
                 func = setActiveCourse,
-                order = 10
+                order = 13
             },
-            blank___ = {order = 11, type = "description", name = "\n"},
+            blank____ = {order = 14, type = "description", name = "\n"},
             copycourse = {
                 name = "Copy Course",
                 desc = "Create a copy of this course",
                 type = "execute",
                 func = copyCourse,
                 width = "full",
-                order = 12
+                order = 15
             },
-            blank____ = {order = 13, type = "description", name = "\n\n"},
+            blank_____ = {order = 16, type = "description", name = "\n\n"},
             removecourse = {
                 name = "Remove Course",
                 desc = "Permanently delete this course",
@@ -790,9 +814,9 @@ createSavedCourseGUI = function()
                 type = "execute",
                 func = removeCourse,
                 width = "full",
-                order = 14
+                order = 17
             },
-            blank_____ = {order = 15, type = "description", name = "\n\n"},
+            blank______ = {order = 18, type = "description", name = "\n\n"},
             showcoursestring = {
                 name = "Show sharable course string",
                 desc = "Show a string that can be used to share your course with friends.",
@@ -800,7 +824,7 @@ createSavedCourseGUI = function()
                 set = setToggleCourseString,
                 get = getToggleCourseString,
                 width = "double",
-                order = 16
+                order = 19
             },
             createcoursestring = {
                 name = "Sharable Course String",
@@ -809,7 +833,7 @@ createSavedCourseGUI = function()
                 hidden = displayCourseString,
                 multiline = true,
                 width = "full",
-                order = 17,
+                order = 20,
                 get = getSharableString
             }
         }
