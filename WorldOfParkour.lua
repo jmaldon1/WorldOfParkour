@@ -11,7 +11,7 @@ function WorldOfParkour:OnInitialize()
         profile = {isInEditMode = false, isActiveCourse = false, activecourse = {}, backupActivecourse = {}}
     }
     self.savedcoursesDefaults = {global = {savedcourses = {}}}
-    self.firstLoadDefaults = {global = {isFirstLoad = true}}
+    self.firstLoadDefaults = {global = {officialcoursesfirstload = {}}}
     self.backupDefaults = {global = {backup = {}}}
 
     self.activeCourseDB = LibStub("AceDB-3.0"):New("WoPActiveParkourCourseDB", self.activeCourseDefaults)
@@ -53,11 +53,15 @@ function WorldOfParkour:OnEnable()
 
     -- Load all default courses the first time the addon is opened.
     -- These will not be added again unless the user resets the addon.
-    if self.firstLoadStore.isFirstLoad then
-        for _, courseImportString in pairs(addon.defaultCourses) do
-            ImportAndAddToGUI(courseImportString)
+    for k, courseImportString in pairs(addon.defaultCourses) do
+        if self.firstLoadStore.officialcoursesfirstload[k] == nil then
+            self.firstLoadStore.officialcoursesfirstload[k] = true
         end
-        self.firstLoadStore.isFirstLoad = false
+
+        if self.firstLoadStore.officialcoursesfirstload[k] == true then
+            ImportAndAddToGUI(courseImportString)
+            self.firstLoadStore.officialcoursesfirstload[k] = false
+        end
     end
 
     -- Reload last active parkour course on load.
@@ -226,11 +230,13 @@ function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
 
     local nextAvailablePointIdxAfterSync = #self.activeCourseStore.activecourse.course + 1
 
-    if type(idx) ~= "number" then WorldOfParkour:Error("SetWaypointAtIndexOnCurrentPosition(idx): idx is not a number."); end
+    if type(idx) ~= "number" then
+        WorldOfParkour:Error("SetWaypointAtIndexOnCurrentPosition(idx): idx is not a number.");
+    end
 
     if idx <= 0 or idx > nextAvailablePointIdxAfterSync then
         WorldOfParkour:Error("Point index out of range. " .. "The next point you can create is " .. "'" ..
-                  nextAvailablePointIdxAfterSync .. "'.");
+                                 nextAvailablePointIdxAfterSync .. "'.");
     end
 
     -- Create the waypoint
