@@ -39,3 +39,4 @@ default_courses\WorldOfParkour_MountainParkour.lua
 default_courses\WorldOfParkour_DescendingHyjal.lua
 default_courses\WorldOfParkour_Silvermoon_City_Heights.lua
 default_courses\WorldOfParkour_MALDraxxus.lua
+default_courses\WorldOfParkour_The_Highest_Fall.lua
