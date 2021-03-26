@@ -85,7 +85,7 @@ local function enableEditMode(info)
     if characterEditingCourse ~= "" then
         local coloredCharacterName = string.format("\124cFFFFF468%s\124r", characterEditingCourse)
         local errMsg = string.format(
-                           "This course is already editing by '%s', you must exit editing mode on that character to edit this course.",
+                           "This course is already being edited by '%s', you must exit editing mode on that character to edit this course.",
                            coloredCharacterName)
         WorldOfParkour:Error(errMsg)
     end
