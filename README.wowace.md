@@ -3,21 +3,6 @@
 # WorldofParkour
 World of Warcraft addon: Parkour puzzles throughout the world.
 
-# Table of Contents
-
-- [Please visit Github to see more well formatted instructions.](#please-visit-github-to-see-more-well-formatted-instructions)
-- [WorldofParkour](#worldofparkour)
-- [Table of Contents](#table-of-contents)
-- [Features](#features)
-- [Known Issues](#known-issues)
-- [Quick Start](#quick-start)
-- [How to Run a Course](#how-to-run-a-course)
-- [Course Creation](#course-creation)
-- [Course Sharing](#course-sharing)
-- [Commands](#commands)
-- [Tips & Tricks](#tips--tricks)
-- [Useful links](#useful-links)
-
 # Features
 
 * Easily create parkour courses anywhere around World of Warcraft.
@@ -46,13 +31,13 @@ Below is a short gif creating a simple parkour course.
 
 # Course Sharing
 
-1. Sharing a Course
+## Sharing a Course
 
     Press the `Show sharable course string` toggle. Copy and paste the string to your friends.
 
     ![course share](https://media.forgecdn.net/attachments/342/596/show_course_share.png "Course Share")
 
-2. Importing a Course
+## Importing a Course
 
     Press the `All Courses` tab and paste the course string into the `Import course` input box.
 
