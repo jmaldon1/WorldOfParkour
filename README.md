@@ -31,15 +31,15 @@ Below is a short gif creating a simple parkour course.
 
 ## Sharing a Course
 
-    Press the `Show sharable course string` toggle. Copy and paste the string to your friends.
+Press the `Show sharable course string` toggle. Copy and paste the string to your friends.
 
-    ![course share](./docs/media/show_course_share.png "Course Share")
+![course share](./docs/media/show_course_share.png "Course Share")
 
 ## Importing a Course
 
-    Press the `All Courses` tab and paste the course string into the `Import course` input box.
+Press the `All Courses` tab and paste the course string into the `Import course` input box.
 
-    ![course import](./docs/media/import_course_share.png "Course Import")
+![course import](./docs/media/import_course_share.png "Course Import")
 
 
 # Commands
