@@ -22,6 +22,7 @@ ignore:
     - docs
     - README.md
     - README.wowace.md
+    - README.wowi.bbcode
     - generate_changelog.sh
 
 manual-changelog:
