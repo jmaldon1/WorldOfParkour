@@ -5,6 +5,7 @@ World of Warcraft addon: Parkour puzzles throughout the world.
 
 # Features
 
+* Many built in courses to challenge your parkour skills.
 * Easily create parkour courses anywhere around World of Warcraft.
 * Share courses with friends.
 * Uses TomTom waypoints to easily show the course points.
@@ -27,8 +28,7 @@ Simply pick a course from the `All Courses` tab and set it as the `Active Course
 
 Below is a short gif creating a simple parkour course.
 
-![course creation](https://github.com/jmaldon1/WorldOfParkour/raw/main/docs/media/course_creation.gif "Course Creation")
-
+![course creation](https://github.com/jmaldon1/WorldOfParkour/raw/3bb51544f7315abac3b89cf8d6c710d0a95aac4f/docs/media/course_creation.gif "Course Creation")
 # Course Sharing
 
 ## Sharing a Course

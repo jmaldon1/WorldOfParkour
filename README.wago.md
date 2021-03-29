@@ -26,7 +26,7 @@ Simply pick a course from the `All Courses` tab and set it as the `Active Course
 
 Below is a short gif creating a simple parkour course.
 
-![course creation](./docs/media/course_creation.gif "Course Creation")
+![course creation](https://github.com/jmaldon1/WorldOfParkour/raw/main/docs/media/course_creation.gif "Course Creation")
 
 # Course Sharing
 
@@ -34,13 +34,13 @@ Below is a short gif creating a simple parkour course.
 
 Press the `Show sharable course string` toggle. Copy and paste the string to your friends.
 
-![course share](./docs/media/show_course_share.png "Course Share")
+![course share](https://github.com/jmaldon1/WorldOfParkour/raw/main/docs/media/show_course_share.png "Course Share")
 
 ## Importing a Course
 
 Press the `All Courses` tab and paste the course string into the `Import course` input box.
 
-![course import](./docs/media/import_course_share.png "Course Import")
+![course import](https://github.com/jmaldon1/WorldOfParkour/raw/main/docs/media/import_course_share.png "Course Import")
 
 
 # Commands
@@ -75,7 +75,3 @@ Press the `All Courses` tab and paste the course string into the `Import course`
 
 1. Create a macro with `/wopsetpoint` and add it to your action bar to quickly add points to a course without opening the WorldOfParkour UI _(NOTE: You need to be editing the course for `/wopsetpoint` to work.)_.
 2. Hints for each point can be seen by right clicking the minimap point icon and clicking `Show hint`.
-   
-# Useful links
-
-https://wow.gamepedia.com/UI_escape_sequences
