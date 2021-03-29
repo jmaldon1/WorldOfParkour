@@ -43,3 +43,4 @@ default_courses\WorldOfParkour_MALDraxxus.lua
 default_courses\WorldOfParkour_The_Highest_Fall.lua
 default_courses\WorldOfParkour_Undercity_Hidden_Coridors.lua
 default_courses\WorldOfParkour_Super_Hole_In_One.lua
+default_courses\WorldOfParkour_Platforming_The_Praetorium.lua
