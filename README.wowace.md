@@ -46,7 +46,9 @@ Press the `All Courses` tab and paste the course string into the `Import course`
 
 # Commands
 
-1. `/wopsetpoint`: Set the next point for the course. Equivalent to pressing `Add Point` in the UI.
+1. `/wop` or `/parkour` to open the WorldOfParkour UI.
+
+2. `/wopsetpoint`: Set the next point for the course. Equivalent to pressing `Add Point` in the UI.
 
    1. Example:
 
@@ -58,7 +60,7 @@ Press the `All Courses` tab and paste the course string into the `Import course`
                             This is the new point.
    ```
 
-2. `/wopsetpointafter`: Set a point after another existing point in the course. Equivalent to pressing `Add point after` or `Add point to beginning` in the UI. 
+3. `/wopsetpointafter`: Set a point after another existing point in the course. Equivalent to pressing `Add point after` or `Add point to beginning` in the UI. 
 
    1. `args`
 
