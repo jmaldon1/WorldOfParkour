@@ -1,0 +1,15 @@
+local _, addon = ...;
+
+-- https://onlinetexttools.com/split-text
+table.insert(addon.defaultCourses, table.concat({
+    "!WOP:1!1r5VVXrruCCLymXSgi2r6csikgHOaqCx8DN9fB3efBSuS4xrxoueII43nZB39jp7odZmRpDUmT0LcQrULguQOg(hyes0IIONgen0XB2",
+    "7meHiDJMzEV33VF(o7ELVzQ004847p6jstLvJbuvoOHu)WkR)NV69UZVQ)XFs99tV3DE2VSP9BVYx)hGZrNbAf5dqTex9jsqRNcYt9JE8LBMnE",
+    "MXPvzUkQMQaB2fw055dX6qzCTt(zPgb3L3UZ4af0O7(gQoi6FqUJfYgpm1bHjxCFWDklr7nA7j3Thrst9J805yh7MlNWZT3yPdoF(jXRDYbLCd",
+    "TF5dcGliGGiuIIsQOe9brU2abQUq4mYtfWuZzy75tWeesZ9iUQYEIVW0iMrATOgrLiy4kNlASIs0H9gfVAzCLLO6z3m8DR5zu9Bv7D9Tx5O4lT",
+    "AC1rXxolETS4AzXxjz9ywN46lT6G4RfF9417e3OtCZKGJ3W(7tkjVW2EoVyPQlCMMALqJNHAbdrxIBjr()k5JRfqTaZZnSVzfxBcIcInimdM3w",
+    "chh5OmWMVjGPRSm7tajKeGSKtvSUa)aXXlSpNyTiIve7EUK5MMEzzhqfIeM3xmXnxOqVeRvlAdY6HjTNuVqP(0uboYgitT9VAT(INJlMPd)QgY",
+    "HcK4IDcG1BrdxEAPYXpsfVRK1d7ZQ3J1YKePmGobowGvWPOGAjqA2tnHGP6fOeEEHsggc1Cw8CVg)5F8rpy)SpTnV5TsRk0KA5sykPPaH(feX6",
+    "4KHtSCMAcfubfy2HAW7V8cLj45qvJKFe9C3kj1p7JEBszFhy7DhU9Ed2PRAWT3Q72J6JDH9gUt3DWH9hb572Fxm3Ub30qLrr5eQuqaTBU1WBnS",
+    ")Tg0x0)27pC393E4JRWaWNbJS3KZrhidO7ifLs3dBP7vTV1)CG)HSZxS9D93vg43jzxq(dx(ZGYl4zLtYgDy(0pbvutvCD7B(H)Bq)Fi5fZmZo",
+    "l91UPE8E92Q3ooPdHGXzFJJb(ZFhO5Q6oHKLMALJA8)n"
+}))
