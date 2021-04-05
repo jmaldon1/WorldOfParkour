@@ -144,7 +144,7 @@ function WorldOfParkour:IsSyncedWithTomTomDB()
     return true
 end
 
-function WorldOfParkour:CheckIfPointExists(uid)
+function WorldOfParkour:IsExistingPoint(uid)
     -- This can prevent duplicates from entering our system.
     local key = TomTom:GetKey(uid)
     for _, coursePoint in ipairs(self.activeCourseStore.activecourse.course) do
@@ -248,7 +248,7 @@ function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
     local uid = TomTom:AddWaypoint(mapID, x, y, opts)
 
     -- Do nothing if the point already exists in our Store.
-    if self:CheckIfPointExists(uid) then return end
+    if self:IsExistingPoint(uid) then return end
 
     -- Save to active course state
     local coursePoint = self:CreateCoursePoint(uid)
