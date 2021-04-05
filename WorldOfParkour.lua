@@ -416,7 +416,7 @@ end
 function WorldOfParkour:CreateNewCourseMetadata()
     return {
         isComplete = false,
-        -- Only one character can edit a course a time.
+        -- Only one character can edit a course at a time.
         characterEditingCourse = "",
         -- Multiple characters can have a course as active.
         charactersWithCourseAsActive = {}
