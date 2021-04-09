@@ -9,7 +9,7 @@
 [*]Share courses with friends.
 [*]Uses TomTom waypoints to easily show the course points.[/LIST]
 
-[SIZE=4][B]Known Issues[/B][/SIZE][LIST=1]
+[SIZE=4][B]Known Issues[/B][/SIZE][LIST]
 [*][B]DO NOT right-click the Crazy Waypoint Arrow that TomTom provides and using any of those options.[/B] It can easily bug out your course run or creation.
 [*]TomTom seems to not always want to clear points even when you are standing on them. So if this occurs, just right click the point on the minimap and press [FONT="System"]Complete point[/FONT] to manually complete it.[/LIST]
 
@@ -19,13 +19,26 @@ To open WorldOfParkour, type [FONT="System"]/wop[/FONT] or [FONT="System"]/parko
 
 [SIZE=4][B]How to Run a Course[/B][/SIZE]
 
-Simply pick a course from the [FONT="System"]All Courses[/FONT] tab and set it as the [FONT="System"]Active Course[/FONT].
+Simply pick a course from either the [FONT="System"]Your Courses[/FONT] tab or the [FONT="System"]Official Courses[/FONT] tab and set it as the [FONT="System"]Active Course[/FONT].
 
 [SIZE=4][B]Course Creation[/B][/SIZE]
 
-Below is a short gif creating a simple parkour course.
+[SIZE=3]GIF[/SIZE]
 
 [IMG]https://github.com/jmaldon1/WorldOfParkour/raw/3bb51544f7315abac3b89cf8d6c710d0a95aac4f/docs/media/course_creation.gif[/IMG]
+
+[SIZE=3]Written instructions[/SIZE]
+
+[LIST=1]
+[*] Click [FONT="System"]New course[/FONT].
+[*] Click [FONT="System"]Set As Active Course[/FONT].
+[*] Click the [FONT="System"]edit[/FONT] tab.
+[*] Click [FONT="System"]Edit Course[/FONT].
+[*] Enter the details of your course.
+[*] Run your course and as you progress through, click [FONT="System"]Add point[/FONT] to put down a marker at your current position.
+[*] Add [FONT="System"]hints[/FONT] to your points if you'd like.
+[*] Use the [Tips & Tricks](Tips_&_Tricks) section to see some ways to make adding points super simple during your parkour runs.
+[/LIST]
 
 [SIZE=4][B]Course Sharing[/B][/SIZE]
 
@@ -34,41 +47,61 @@ Press the [FONT="System"]Show sharable course string[/FONT] toggle. Copy and pas
 [IMG]https://github.com/jmaldon1/WorldOfParkour/raw/3bb51544f7315abac3b89cf8d6c710d0a95aac4f/docs/media/show_course_share.png[/IMG]
 
 [SIZE=3]Importing a Course[/SIZE]
-Press the [FONT="System"]All Courses[/FONT] tab and paste the course string into the [FONT="System"]Import course[/FONT] input box.
+Press the [FONT="System"]Your Courses[/FONT] tab and paste the course string into the [FONT="System"]Import course[/FONT] input box.
 [IMG]https://github.com/jmaldon1/WorldOfParkour/raw/3bb51544f7315abac3b89cf8d6c710d0a95aac4f/docs/media/import_course_share.png[/IMG]
-
 
 
 [SIZE=4][B]Commands[/B][/SIZE]
 
-1. [FONT="System"]/wop[/FONT] or [FONT="System"]/parkour[/FONT] to open the WorldOfParkour UI.
+[LIST=1]
+[*][FONT="System"]/wop[/FONT] or [FONT="System"]/parkour[/FONT] to open the WorldOfParkour UI.
 
-2. [FONT="System"]/wopsetpoint[/FONT]: Set the next point for the course. Equivalent to pressing [FONT="System"]Add Point[/FONT] in the UI.
+[*][FONT="System"]/wopsetpoint[/FONT]: Set the next point for the course. Equivalent to pressing [FONT="System"]Add Point[/FONT] in the UI.
 
-[INDENT]1. Example:[/INDENT]
+[LIST=1]
+[*]Example:
    
-[INDENT][code]Points: [1, 2, 3, 4, 5]
+[CODE]
+Points: [1, 2, 3, 4, 5]
 /wopsetpoint
 Points: [1, 2, 3, 4, 5, 6]
                         ^
-                        This is the new point.[/code][/INDENT]
+                        This is the new point.
+[/CODE]
+[/LIST]
 
-3. [FONT="System"]/wopsetpointafter[/FONT]: Set a point after another existing point in the course. Equivalent to pressing [FONT="System"]Add point after[/FONT] or [FONT="System"]Add point to beginning[/FONT] in the UI. 
+[*][FONT="System"]/wopsetpointafter[/FONT]: Set a point after another existing point in the course. Equivalent to pressing [FONT="System"]Add point after[/FONT] or [FONT="System"]Add point to beginning[/FONT] in the UI. 
 
-[INDENT]1. [FONT="System"]args[/FONT][/INDENT]
+[LIST=1]
+[*][FONT="System"]args[/FONT]
 
-[INDENT][INDENT]1. [FONT="System"]Index[number][/FONT]: Index of the point to add another point after.[/INDENT][/INDENT]
 
-[INDENT]2. Example: [/INDENT]
+[LIST=1]
+[*][FONT="System"]Index[number][/FONT]: Index of the point to add another point after.
+[/LIST]
 
-[INDENT][CODE]Points: [1, 2, 3, 4, 5]
+
+[*]Example:
+
+[CODE]
+Points: [1, 2, 3, 4, 5]
 /wopsetpointafter 2
 Points: [1, 2, 3, 4, 5, 6]
                ^
-               This is the new point.[/CODE][/INDENT]
-
+               This is the new point.
+[/CODE]
+[/LIST]
+[/LIST]
 
 [SIZE=4][B]Tips & Tricks[/B][/SIZE]
-[LIST=1]
-[*]Create a macro with [FONT="System"]/wopsetpoint[/FONT] and add it to your action bar to quickly add points to a course without opening the WorldOfParkour UI [I](NOTE: You need to be editing the course for [FONT="System"]/wopsetpoint[/FONT] to work.)[/I].
-[*]Hints for each point can be seen by right clicking the minimap point icon and clicking [FONT="System"]Show hint[/FONT].[/LIST]
+[LIST]
+[*]Create a macro with [FONT="System"]/wopsetpoint[/FONT] and add it to your action bar to quickly add points to a course without opening the WorldOfParkour UI
+[LIST]
+[*][I](NOTE: You need to be editing the course for [FONT="System"]/wopsetpoint[/FONT] to work.)[/I].
+[/LIST]
+[*]Hints for each point can be seen by right clicking the minimap point icon and clicking [FONT="System"]Show hint[/FONT].
+[*][B]Good practice:[/B] Say the starting location of the course in the description.
+[LIST]
+[*]Why? If the user is in a different world than the first waypoint, the user will not see a waypoint arrow appear on their screen.
+[/LIST]
+[/LIST]

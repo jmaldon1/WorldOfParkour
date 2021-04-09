@@ -78,25 +78,6 @@ local function isCourseDifferent(courseA, courseB)
     return isCoursePointsDiff or isCourseDetailsDiff or isCoursePointDetailsDiff
 end
 
-local function enableEditMode(info)
-    local courseId = findCourseIdRecursive(info)
-    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseId].metadata
-    local characterEditingCourse = savedCourseMetadata.characterEditingCourse
-    if characterEditingCourse ~= "" then
-        local coloredCharacterName = string.format("\124cFFFFF468%s\124r", characterEditingCourse)
-        local errMsg = string.format(
-                           "This course is already being edited by '%s', you must exit editing mode on that character to edit this course.",
-                           coloredCharacterName)
-        WorldOfParkour:Error(errMsg)
-    end
-    savedCourseMetadata.characterEditingCourse = string.format("%s-%s", UnitFullName("player"))
-
-    -- Reset the course completion before editing.
-    WorldOfParkour:ResetCourseCompletion(WorldOfParkour.activeCourseStore.activecourse, true)
-    WorldOfParkour.activeCourseStore.isInEditMode = true
-    SetCrazyArrowToFirstOrLastPoint("last")
-end
-
 local function disableEditMode(courseId)
     local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseId].metadata
     savedCourseMetadata.characterEditingCourse = ""
@@ -197,8 +178,8 @@ local function updateCourse()
     activeCourse.compressedcoursedata = WorldOfParkour:CompressCourseData(activeCourse)
 end
 
-local function unsetActiveCourse(info)
-    local courseId = findCourseIdRecursive(info)
+local function unsetActiveCourse(courseId, _scheduleSelectCourse)
+    local scheduleSelectCourse = (_scheduleSelectCourse ~= false)
     local activeCourse = WorldOfParkour.activeCourseStore.activecourse
     local backupActiveCourse = WorldOfParkour.activeCourseStore.backupActivecourse
     -- Remove waypoints from screen.
@@ -217,8 +198,15 @@ local function unsetActiveCourse(info)
     WorldOfParkour.activeCourseStore.activecourse = {}
     WorldOfParkour.activeCourseStore.backupActivecourse = {}
 
-    -- Select the unset course from the course list.
-    WorldOfParkour:ScheduleTimer(selectCourse, 0, courseId)
+    if scheduleSelectCourse then
+        -- Select the unset course from the course list.
+        WorldOfParkour:ScheduleTimer(selectCourse, 0, courseId)
+    end
+end
+
+local function onClickUnsetActiveCourse(info)
+    local courseId = findCourseIdRecursive(info)
+    unsetActiveCourse(courseId)
 end
 
 local function getCourseTitle(info)
@@ -268,7 +256,10 @@ local function displayMatchingCourses(courseStartsWith)
     -- Hide courses that do not match the search criteria
     local uuidPattern = "%w+-%w+-4%w+-%w+-%w+"
     local courseList = WorldOfParkour.GUIoptionsStore.options.args.courselist.args
-    for id, v in pairs(courseList) do
+    local officialCourseList = WorldOfParkour.GUIoptionsStore.options.args.officialcourselist.args
+    local allCourses = utils.mergeTables(courseList, officialCourseList)
+
+    for id, v in pairs(allCourses) do
         -- Only check courses (We know its a course by the pattern of their table key)
         if string.match(id, uuidPattern) then
             local savedCourses = WorldOfParkour.savedCoursesStore.savedcourses
@@ -465,9 +456,15 @@ local function courseResetButtonFn()
     WorldOfParkour:ResetCourseCompletion(courseDetails, true)
 end
 
-local function editCourseConfirm()
+local function editCourseConfirm(info)
+    local courseId = findCourseIdRecursive(info)
     local course = WorldOfParkour.activeCourseStore.activecourse.course
-    return WorldOfParkour:IsCourseBeingRun(course)
+    if WorldOfParkour:isOfficialCourse(courseId) then
+        return "You cannot edit an Official Course.\nWould you like to make a copy and edit that?"
+    elseif WorldOfParkour:IsCourseBeingRun(course) then
+        return "Editing the course now will reset your completion progress. Are you sure?\n\n" ..
+                   "TIP: If you would like to edit this course without losing your progress, make a copy and edit that."
+    end
 end
 
 local function exitWithSave(info)
@@ -514,6 +511,8 @@ local function exitWithoutSaving()
     disableEditMode(courseId)
 end
 
+local onClickEnableEditMode
+
 createActiveCourseGUI = function()
     local activeCourse = {
         name = getEditableCourseTitle,
@@ -555,7 +554,7 @@ createActiveCourseGUI = function()
                         type = "execute",
                         width = "full",
                         order = 12,
-                        func = unsetActiveCourse
+                        func = onClickUnsetActiveCourse
                     }
                 }
             },
@@ -568,13 +567,11 @@ createActiveCourseGUI = function()
                         name = "Edit Course",
                         desc = "Edit the course",
                         confirm = editCourseConfirm,
-                        confirmText = "Editing the course now will reset your completion progress. Are you sure?\n\n" ..
-                            "If you would like to edit this course without losing your progress, make a copy and edit that.",
                         type = "execute",
                         disabled = utils.bind(WorldOfParkour, "isInEditMode"),
                         width = "full",
                         order = 1,
-                        func = enableEditMode
+                        func = onClickEnableEditMode
                     },
                     blank = {order = 2, type = "description", name = ""},
                     title = {
@@ -673,8 +670,7 @@ createActiveCourseGUI = function()
     return activeCourse
 end
 
-local function setActiveCourse(info, action)
-    local courseId = findCourseIdRecursive(info)
+local function setActiveCourse(courseId)
     local savedCourse = WorldOfParkour.savedCoursesStore.savedcourses[courseId]
 
     -- We need to make copies here because Lua passes around tables as reference.
@@ -700,10 +696,15 @@ local function setActiveCourse(info, action)
 
     -- Add to GUI
     WorldOfParkour.GUIoptionsStore.options.args.activecourse.args[courseId] = createActiveCourseGUI()
+    -- print(WorldOfParkour.GUIoptionsStore.options.args.activecourse.args[courseId])
+    WorldOfParkour:ScheduleTimer(selectActiveCourse, 0, courseId)
 
     SetCrazyArrowToFirstOrLastPoint("first")
+end
 
-    WorldOfParkour:ScheduleTimer(selectActiveCourse, 0, courseId)
+local function onClickSetActiveCourse(info, action)
+    local courseId = findCourseIdRecursive(info)
+    setActiveCourse(courseId)
 end
 
 local function getSharableString(info)
@@ -731,10 +732,15 @@ local function displayCourseString(info)
     return not WorldOfParkour.showCourseString[courseId]
 end
 
+local function disableRemoveCourse(info)
+    local courseId = findCourseIdRecursive(info)
+    return WorldOfParkour:isOfficialCourse(courseId)
+end
+
 local createSavedCourseGUI
 
-local function copyCourse(info)
-    local courseId = findCourseIdRecursive(info)
+local function copyCourse(courseId, _scheduleSelectCourse)
+    local scheduleSelectCourse = (_scheduleSelectCourse ~= false)
     local savedCourse = WorldOfParkour.savedCoursesStore.savedcourses[courseId]
     local savedCourseCopy = utils.deepcopy(savedCourse)
     -- New UUID because we just made a copy of an existing course.
@@ -753,7 +759,57 @@ local function copyCourse(info)
     -- Add course to GUI
     WorldOfParkour.GUIoptionsStore.options.args.courselist.args[uuid] = createSavedCourseGUI()
     -- Select the new course once its been created.
-    WorldOfParkour:ScheduleTimer(selectCourse, 0, uuid)
+    if scheduleSelectCourse then WorldOfParkour:ScheduleTimer(selectCourse, 0, uuid) end
+    return uuid
+end
+
+local function onClickCopyCourse(info)
+    local courseId = findCourseIdRecursive(info)
+    copyCourse(courseId)
+end
+
+local function selectEditMenu(courseId)
+    AceConfigDialog:SelectGroup("WorldOfParkour", "activecourse", courseId, "tabedit")
+end
+
+local function enableEditMode(courseId)
+    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseId].metadata
+    local characterEditingCourse = savedCourseMetadata.characterEditingCourse
+    if characterEditingCourse ~= "" then
+        local coloredCharacterName = string.format("\124cFFFFF468%s\124r", characterEditingCourse)
+        local errMsg = string.format(
+                           "This course is already being edited by '%s', you must exit editing mode on that character to edit this course.",
+                           coloredCharacterName)
+        WorldOfParkour:Error(errMsg)
+    end
+    savedCourseMetadata.characterEditingCourse = string.format("%s-%s", UnitFullName("player"))
+
+    -- Reset the course completion before editing.
+    WorldOfParkour:ResetCourseCompletion(WorldOfParkour.activeCourseStore.activecourse, true)
+    WorldOfParkour.activeCourseStore.isInEditMode = true
+    SetCrazyArrowToFirstOrLastPoint("last")
+end
+
+onClickEnableEditMode = function(info)
+    local courseId = findCourseIdRecursive(info)
+    if WorldOfParkour:isOfficialCourse(courseId) then
+        -- Avoid scheduling any selections of courses because they will just happen out of order.
+        -- We only want to select the course once its the active course.
+        local scheduleSelectCourse = false
+        -- If the user wants to edit an official course, the below steps will be done for them.
+        -- Unset course
+        unsetActiveCourse(courseId, scheduleSelectCourse)
+        -- Make a copy
+        local courseCopyId = copyCourse(courseId, scheduleSelectCourse)
+        -- Set copy as active
+        setActiveCourse(courseCopyId)
+        -- Switch to edit tab
+        WorldOfParkour:ScheduleTimer(selectEditMenu, 0, courseCopyId)
+        -- Enable edit mode
+        enableEditMode(courseCopyId)
+    else
+        enableEditMode(courseId)
+    end
 end
 
 createSavedCourseGUI = function()
@@ -793,7 +849,7 @@ createSavedCourseGUI = function()
                 type = "execute",
                 width = "full",
                 disabled = utils.bind(WorldOfParkour, "isActiveCourse"),
-                func = setActiveCourse,
+                func = onClickSetActiveCourse,
                 order = 13
             },
             blank____ = {order = 14, type = "description", name = "\n"},
@@ -801,7 +857,7 @@ createSavedCourseGUI = function()
                 name = "Copy Course",
                 desc = "Create a copy of this course",
                 type = "execute",
-                func = copyCourse,
+                func = onClickCopyCourse,
                 width = "full",
                 order = 15
             },
@@ -812,6 +868,7 @@ createSavedCourseGUI = function()
                 confirm = true,
                 confirmText = "Are you sure you want to delete this course?",
                 type = "execute",
+                disabled = disableRemoveCourse,
                 func = removeCourse,
                 width = "full",
                 order = 17
@@ -851,10 +908,17 @@ local function addNewCourse()
     WorldOfParkour:ScheduleTimer(selectCourse, 0, newCourseDefaults.id)
 end
 
-function ImportAndAddToGUI(courseString)
+function ImportAndAddToYourCoursesGUI(courseString)
     local courseId = WorldOfParkour:ImportSharableString(courseString)
     -- Add course to GUI
     WorldOfParkour.GUIoptionsStore.options.args.courselist.args[courseId] = createSavedCourseGUI()
+    return courseId
+end
+
+function ImportAndAddToOfficialCoursesGUI(courseString)
+    local courseId = WorldOfParkour:ImportSharableString(courseString)
+    -- Add course to GUI
+    WorldOfParkour.GUIoptionsStore.options.args.officialcourselist.args[courseId] = createSavedCourseGUI()
     return courseId
 end
 
@@ -862,7 +926,7 @@ local function getImportCourseString() return WorldOfParkour.importCourseString 
 
 local function setImportCourseString(info, courseString)
     WorldOfParkour.importCourseString = courseString
-    local courseId = ImportAndAddToGUI(courseString)
+    local courseId = ImportAndAddToYourCoursesGUI(courseString)
     -- Select the imported course once its been created.
     WorldOfParkour:ScheduleTimer(selectCourse, 0, courseId)
 end
@@ -895,7 +959,7 @@ function WorldOfParkour:GenerateOptions()
                 }
             },
             courselist = {
-                name = "All Courses",
+                name = "Your Courses",
                 type = "group",
                 desc = "Selection of parkour courses to set as active.",
                 args = {
@@ -927,13 +991,42 @@ function WorldOfParkour:GenerateOptions()
                     }
                     -- All courses go here
                 }
+            },
+            officialcourselist = {
+                name = "Official Courses",
+                type = "group",
+                desc = "Selection of parkour courses to set as active.",
+                args = {
+                    search = {
+                        name = "Search for Course",
+                        type = "input",
+                        get = getCourseSearch,
+                        set = setCourseSearch,
+                        order = 1
+                    },
+                    clearsearch = {
+                        name = "Clear",
+                        desc = "Clear the search box",
+                        type = "execute",
+                        width = "half",
+                        order = 2,
+                        func = clearCourseSearch
+                    }
+                    -- Official courses go here
+                }
             }
         }
     }
 
     -- Load stored courses.
     for id, _ in pairs(self.savedCoursesStore.savedcourses) do
-        options.args.courselist.args[id] = createSavedCourseGUI()
+        if self.firstLoadStore.officialcourseids[id] then
+            -- Add to official courses
+            options.args.officialcourselist.args[id] = createSavedCourseGUI()
+        else
+            -- Add to your courses
+            options.args.courselist.args[id] = createSavedCourseGUI()
+        end
     end
 
     return options

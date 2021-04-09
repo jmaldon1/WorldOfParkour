@@ -1,7 +1,7 @@
 local _, addon = ...;
 
 -- https://onlinetexttools.com/split-text
-table.insert(addon.defaultCourses, table.concat({
+table.insert(addon.officialCourses, table.concat({
     "!WOP:1!nn1ZRrrsuymAu3oK1jbsoLdfYcUeYmzYm78RCziruNdUldZmsWto1uv1t)Y0Dvfvv9mmcEr2)aepS)be2JEsuq82EW7flEvbpRN8Ihe",
     "eF90jrHg6h1RFFVVVV6RVW)mIPsnwX21FktLOJfobpQskWF1fx5F)9oT)WtEzLp)(L60(tT(2xEZwF9ZuJbMsJ5G1rLmXYpLrJJhrztS1F8zhg",
     "0BMYeZdmjGesO6Gt0cJfBkKUi)vh()Syb1C2xVrph4IfMUkq6i7DyObjsHJYqGOcjDPMjif1RVateThamL8bw4H4Kmd9HZhQx70f9tT8xz4Hri",

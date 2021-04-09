@@ -125,3 +125,11 @@ utils.replaceTable = function(fromTable, toTable)
     -- copy the new ones over
     for k, v in pairs(fromTable) do toTable[k] = v end
 end
+
+utils.mergeTables = function(t1, t2)
+    local newTable = {}
+    for k,v in pairs(t1) do newTable[k] = v end
+    for k,v in pairs(t2) do newTable[k] = v end
+
+    return newTable
+end

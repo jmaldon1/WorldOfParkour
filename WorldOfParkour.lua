@@ -11,7 +11,7 @@ function WorldOfParkour:OnInitialize()
         profile = {isInEditMode = false, isActiveCourse = false, activecourse = {}, backupActivecourse = {}}
     }
     self.savedcoursesDefaults = {global = {savedcourses = {}}}
-    self.firstLoadDefaults = {global = {officialcoursesfirstload = {}}}
+    self.firstLoadDefaults = {global = {officialcoursesfirstload = {}, officialcourseids = {}}}
     self.backupDefaults = {global = {backup = {}}}
 
     self.activeCourseDB = LibStub("AceDB-3.0"):New("WoPActiveParkourCourseDB", self.activeCourseDefaults)
@@ -53,14 +53,13 @@ function WorldOfParkour:OnEnable()
 
     -- Load all default courses the first time the addon is opened.
     -- These will not be added again unless the user resets the addon.
-    for k, courseImportString in pairs(addon.defaultCourses) do
+    for k, courseImportString in pairs(addon.officialCourses) do
         if self.firstLoadStore.officialcoursesfirstload[k] == nil then
+            local courseId = ImportAndAddToOfficialCoursesGUI(courseImportString)
+            -- Add the official course Ids to a set
+            self.firstLoadStore.officialcourseids[courseId] = true
+            -- Mark down that this course should not be loaded again.
             self.firstLoadStore.officialcoursesfirstload[k] = true
-        end
-
-        if self.firstLoadStore.officialcoursesfirstload[k] == true then
-            ImportAndAddToGUI(courseImportString)
-            self.firstLoadStore.officialcoursesfirstload[k] = false
         end
     end
 
@@ -104,6 +103,13 @@ function WorldOfParkour:isNotActiveCourse() return not self:isActiveCourse() end
 function WorldOfParkour:isInEditMode() return self.activeCourseStore.isInEditMode end
 
 function WorldOfParkour:isNotInEditMode() return not self:isInEditMode() end
+
+function WorldOfParkour:isOfficialCourse(courseId)
+    if self.firstLoadStore.officialcourseids[courseId] then
+        return true
+    end
+    return false
+end
 
 function WorldOfParkour:SyncWithTomTomDB()
     -- This will remove any points that exist in our store but not TomTom's,
