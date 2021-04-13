@@ -35,7 +35,7 @@ WorldOfParkour_TomTomCallbacks.lua
 WorldOfParkour_GUI.lua
 
 # Default courses (Imported on first addon load)
-official_courses\WorldOfParkour_OfficialCourses.lua.lua
+official_courses\WorldOfParkour_OfficialCourses.lua
 official_courses\WorldOfParkour_MountainParkour.lua
 official_courses\WorldOfParkour_DescendingHyjal.lua
 official_courses\WorldOfParkour_Silvermoon_City_Heights.lua
