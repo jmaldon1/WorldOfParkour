@@ -37,7 +37,7 @@ Simply pick a course from either the `Your Courses` tab or the `Official Courses
 5. Enter the details of your course.
 6. Run your course and as you progress through, click `Add point` to put down a marker at your current position.
 7. Add `hints` to your points if you'd like.
-8. Use the [Tips & Tricks](Tips_&_Tricks) section to see some ways to make adding points super simple during your parkour runs.
+8. Use the [Tips & Tricks](#tips--tricks) section to see some ways to make adding points super simple during your parkour runs.
 
 # Course Sharing
 
