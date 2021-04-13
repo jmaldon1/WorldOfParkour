@@ -39,6 +39,7 @@ function WorldOfParkour:OnInitialize()
     self.importCourseString = ""
     self.github = "https://github.com/jmaldon1/WorldOfParkour"
     self.githubIssues = "https://github.com/jmaldon1/WorldOfParkour/issues"
+    self.twitch = "https://www.twitch.tv/joshsbad"
 
     -- Register when a player is logging out.
     -- https://wow.gamepedia.com/PLAYER_LEAVING_WORLD
@@ -371,6 +372,7 @@ function WorldOfParkour:ReloadActiveCourse()
     for _, coursePoint in pairs(self.activeCourseStore.activecourse.course) do
         local uid = coursePoint.uid
         local m, x, y, options = self:CreateTomTomWaypointArgs(uid)
+        print(options.callbacks.distance[3])
 
         local isSuccess, results = pcall(utils.bind(TomTom, "AddWaypoint"), m, x, y, options)
         if not isSuccess then WorldOfParkour:Error("This course is invalid, please delete it.") end

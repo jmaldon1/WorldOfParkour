@@ -11,13 +11,17 @@ local function createBlizzOptions()
         },
         blank = {order = 2, type = "description", name = "\n\n\n"},
         help = {order = 3, type = "description", name = "Account wide settings for the WorldOfParkour addon."},
-        blank_ = {order = 4, type = "description", name = "\n"},
-        resetheader = {order = 5, type = "header", name = "Master Addon Tools"},
+        quickstartheader = {order = 4, type = "header", name = "Quick Start"},
+        quickstart = {order = 5, type = "description", name = "To open WorldOfParkour, type /wop or /parkour into your chat and hit enter."},
+        blank_ = {order = 6, type = "description", name = "\n\n"},
+        resetheader = {order = 8, type = "header", name = "Master Addon Tools"},
         resetbutton = {
-            order = 6,
+            order = 9,
             type = "execute",
             name = "Reset WorldOfParkour Addon",
-            desc = "If a WorldOfParkour addon is behaving oddly, this wipes all saved state across all characters. Log out and back in again to complete the reset.",
+            desc = "If the WorldOfParkour addon is behaving oddly, this wipes all saved state across all characters. " ..
+                "Log out and back in again to complete the reset. " ..
+                "This will NOT reset your course backups!",
             confirm = true,
             width = "full",
             func = function()
@@ -34,16 +38,16 @@ local function createBlizzOptions()
             end
         },
         resetbackupbuttondesc = {
-            order = 7,
+            order = 10,
             type = "description",
-            name = "\n\nI recommend not resetting the Course Backup unless absolutely necessary. " ..
+            name = "\n\nI recommend NOT resetting the Course Backup unless absolutely necessary. " ..
                 "This backup can be used to recover your courses in the case of addon failure and an addon reset was required. " ..
-                "\nHow to recover course strings: " .. "\n    1. Open the following path in a text editor: " ..
-                "`World of Warcraft\\_{retail, classic}_\\WTF\\Account\\{Account#}\\SavedVariables\\WorldOfParkour.lua`" ..
+                "\nHow to recover course strings: " .. "\n    1. Open the following path in a text editor (Notepad, VS code, Sublime Text editor, etc...): \n" ..
+                "        `World of Warcraft\\_{retail, classic}_\\WTF\\Account\\{Account#}\\SavedVariables\\WorldOfParkour.lua`" ..
                 "\n    2. Look for a key named `WoPBackupDB` and search for course strings that you would like to recover within it."
         },
         resetbackupbutton = {
-            order = 8,
+            order = 11,
             type = "execute",
             name = "Reset WorldOfParkour Course Backup",
             desc = "Clears the course string backup",
@@ -51,15 +55,15 @@ local function createBlizzOptions()
             width = "full",
             func = function() WorldOfParkour.backupDB:ResetDB() end
         },
-        blank__ = {order = 9, type = "description", name = "\n\n"},
-        githubheader = {order = 10, type = "header", name = "Github"},
+        blank__ = {order = 12, type = "description", name = "\n\n"},
+        githubheader = {order = 13, type = "header", name = "Github"},
         githubdesc = {
-            order = 11,
+            order = 14,
             name = "If you would like to see the code for those addon, report a bug, or request a feature use the following links.",
             type = "description"
         },
         githublink = {
-            order = 12,
+            order = 15,
             name = "Github",
             desc = "Addon code repository",
             type = "input",
@@ -68,13 +72,28 @@ local function createBlizzOptions()
             set = function() return WorldOfParkour.github end
         },
         githubissueslink = {
-            order = 13,
+            order = 16,
             name = "Github issues",
             desc = "Report bugs and request features",
             type = "input",
             width = 1.7,
             get = function() return WorldOfParkour.githubIssues end,
             set = function() return WorldOfParkour.githubIssues end
+        },
+        blank___ = {order = 17, type = "description", name = "\n\n"},
+        twitchheader = {order = 18, type = "header", name = "Twitch"},
+        twitchdesc = {
+            order = 19,
+            name = "Check me out on Twitch, always taking suggestions for new courses.",
+            type = "description"
+        },
+        twitchlink = {
+            order = 20,
+            name = "Twitch",
+            type = "input",
+            width = 1.7,
+            get = function() return WorldOfParkour.twitch end,
+            set = function() return WorldOfParkour.twitch end
         }
     }
 end
