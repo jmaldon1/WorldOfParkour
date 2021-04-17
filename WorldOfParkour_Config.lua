@@ -26,7 +26,7 @@ local function createBlizzOptions()
             width = "full",
             func = function()
                 AceConfigDialog:Close("WorldOfParkour")
-                if WorldOfParkour:isActiveCourse() then
+                if WorldOfParkour:IsActiveCourse() then
                     WorldOfParkour:RemoveAllTomTomWaypoints()
                 end
                 WorldOfParkour.activeCourseStore.activecourse.course = {}

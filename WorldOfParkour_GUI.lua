@@ -81,7 +81,7 @@ end
 local function disableEditMode(courseId)
     local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseId].metadata
     savedCourseMetadata.characterEditingCourse = ""
-    WorldOfParkour.activeCourseStore.isInEditMode = false
+    WorldOfParkour.activeCourseStore.IsInEditMode = false
     SetCrazyArrowToFirstOrLastPoint("first")
 end
 
@@ -91,7 +91,7 @@ local function enableActiveCourse(courseId)
     local playerFullName = string.format("%s-%s", UnitFullName("player"))
     charactersWithCourseAsActive[playerFullName] = true
 
-    WorldOfParkour.activeCourseStore.isActiveCourse = true
+    WorldOfParkour.activeCourseStore.IsActiveCourse = true
 end
 
 local function disableActiveCourse(courseId)
@@ -100,23 +100,12 @@ local function disableActiveCourse(courseId)
     local playerFullName = string.format("%s-%s", UnitFullName("player"))
     charactersWithCourseAsActive[playerFullName] = nil
 
-    WorldOfParkour.activeCourseStore.isActiveCourse = false
+    WorldOfParkour.activeCourseStore.IsActiveCourse = false
 end
 
-local function removeCourse(info, action)
+local function onClickRemoveCourse(info, action)
     local courseId = findCourseIdRecursive(info)
-
-    local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseId].metadata
-    local charactersWithCourseAsActive = utils.tableKeys(savedCourseMetadata.charactersWithCourseAsActive)
-    if #charactersWithCourseAsActive > 0 then
-        local charactersWithCourseAsActiveList = table.concat(charactersWithCourseAsActive, ", ")
-        local coloredCharacterNames = string.format("\124cFFFFF468%s\124r", charactersWithCourseAsActiveList)
-        WorldOfParkour:Error("Unset this course as active from the following characters before removing: " ..
-                                 coloredCharacterNames)
-    end
-
-    WorldOfParkour.savedCoursesStore.savedcourses[courseId] = nil
-    WorldOfParkour.GUIoptionsStore.options.args.courselist.args[courseId] = nil
+    WorldOfParkour:RemoveCourse(courseId)
 end
 
 local function selectActiveCourse(courseId)
@@ -179,6 +168,7 @@ local function updateCourse()
 end
 
 local function unsetActiveCourse(courseId, _scheduleSelectCourse)
+    -- Default to true
     local scheduleSelectCourse = (_scheduleSelectCourse ~= false)
     local activeCourse = WorldOfParkour.activeCourseStore.activecourse
     local backupActiveCourse = WorldOfParkour.activeCourseStore.backupActivecourse
@@ -201,6 +191,34 @@ local function unsetActiveCourse(courseId, _scheduleSelectCourse)
     if scheduleSelectCourse then
         -- Select the unset course from the course list.
         WorldOfParkour:ScheduleTimer(selectCourse, 0, courseId)
+    end
+end
+
+function WorldOfParkour:RemoveCourse(courseId, _forceUnsetActiveCourse)
+    local forceUnsetActiveCourse = _forceUnsetActiveCourse or false
+
+    if self:IsActiveCourse() and forceUnsetActiveCourse then
+        local activeCourseId = WorldOfParkour.activeCourseStore.activecourse.id
+        if activeCourseId == courseId then
+            -- Check if the currently active course is the same course we are trying to remove.
+            unsetActiveCourse(courseId, false)
+        end
+    else
+        -- Alert the user they need to unset the active course manually.
+        local savedCourseMetadata = WorldOfParkour.savedCoursesStore.savedcourses[courseId].metadata
+        local charactersWithCourseAsActive = utils.tableKeys(savedCourseMetadata.charactersWithCourseAsActive)
+        if #charactersWithCourseAsActive > 0 then
+            local charactersWithCourseAsActiveList = table.concat(charactersWithCourseAsActive, ", ")
+            local coloredCharacterNames = string.format("\124cFFFFF468%s\124r", charactersWithCourseAsActiveList)
+            WorldOfParkour:Error("Unset this course as active from the following characters before removing: " ..
+                                    coloredCharacterNames)
+        end
+    end
+    self.savedCoursesStore.savedcourses[courseId] = nil
+    if self:IsOfficialCourse(courseId) then
+        self.GUIoptionsStore.options.args.officialcourselist.args[courseId] = nil
+    else
+        self.GUIoptionsStore.options.args.courselist.args[courseId] = nil
     end
 end
 
@@ -400,7 +418,7 @@ end
 
 local function disableUndo()
     -- If we are not in editing mode, disable button.
-    if WorldOfParkour:isNotInEditMode() then return true end
+    if WorldOfParkour:IsNotInEditMode() then return true end
     local backupActiveCourse = WorldOfParkour.activeCourseStore.backupActivecourse
     local activeCourse = WorldOfParkour.activeCourseStore.activecourse
     -- Disable if courses aren't different
@@ -416,7 +434,7 @@ local function getCourseDifficultyDisplay(info)
 end
 
 local function getActiveCourseCompletion()
-    if WorldOfParkour:isNotActiveCourse() then errors.notInActiveModeError() end
+    if WorldOfParkour:IsNotActiveCourse() then errors.notInActiveModeError() end
     local course = WorldOfParkour.activeCourseStore.activecourse.course
     return WorldOfParkour:GetCourseCompletion(course)
 end
@@ -451,7 +469,7 @@ local function getCreator(info)
     return string.format("\124cFFFFFF00Creator: %s\124r", creator)
 end
 
-local function courseResetButtonFn()
+local function onClickCourseReset()
     local courseDetails = WorldOfParkour.activeCourseStore.activecourse
     WorldOfParkour:ResetCourseCompletion(courseDetails, true)
 end
@@ -459,7 +477,7 @@ end
 local function editCourseConfirm(info)
     local courseId = findCourseIdRecursive(info)
     local course = WorldOfParkour.activeCourseStore.activecourse.course
-    if WorldOfParkour:isOfficialCourse(courseId) then
+    if WorldOfParkour:IsOfficialCourse(courseId) then
         return "You cannot edit an Official Course.\nWould you like to make a copy and edit that?"
     elseif WorldOfParkour:IsCourseBeingRun(course) then
         return "Editing the course now will reset your completion progress. Are you sure?\n\n" ..
@@ -568,7 +586,7 @@ createActiveCourseGUI = function()
                         desc = "Edit the course",
                         confirm = editCourseConfirm,
                         type = "execute",
-                        disabled = utils.bind(WorldOfParkour, "isInEditMode"),
+                        disabled = utils.bind(WorldOfParkour, "IsInEditMode"),
                         width = "full",
                         order = 1,
                         func = onClickEnableEditMode
@@ -581,7 +599,7 @@ createActiveCourseGUI = function()
                         type = "input",
                         order = 3,
                         width = "double",
-                        disabled = utils.bind(WorldOfParkour, "isNotInEditMode"),
+                        disabled = utils.bind(WorldOfParkour, "IsNotInEditMode"),
                         set = setEditableCourseTitle,
                         get = getEditableCourseTitle
                     },
@@ -593,7 +611,7 @@ createActiveCourseGUI = function()
                         multiline = true,
                         width = "double",
                         order = 5,
-                        disabled = utils.bind(WorldOfParkour, "isNotInEditMode"),
+                        disabled = utils.bind(WorldOfParkour, "IsNotInEditMode"),
                         set = setEditableCourseDescription,
                         get = getEditableCourseDescription
                     },
@@ -604,14 +622,14 @@ createActiveCourseGUI = function()
                         desc = "Set the course difficulty level.",
                         type = "select",
                         order = 6,
-                        disabled = utils.bind(WorldOfParkour, "isNotInEditMode"),
+                        disabled = utils.bind(WorldOfParkour, "IsNotInEditMode"),
                         set = setEditableCourseDifficulty,
                         get = getEditableCourseDifficulty
                     },
                     pointslist = {
                         name = "Course Points",
                         type = "group",
-                        disabled = utils.bind(WorldOfParkour, "isNotInEditMode"),
+                        disabled = utils.bind(WorldOfParkour, "IsNotInEditMode"),
                         order = 7,
                         args = CreatePointsListGUI()
                     }
@@ -628,7 +646,7 @@ createActiveCourseGUI = function()
                             "If no changes were made, this will just exit out of editing mode.",
                         type = "execute",
                         width = "double",
-                        disabled = utils.bind(WorldOfParkour, "isNotInEditMode"),
+                        disabled = utils.bind(WorldOfParkour, "IsNotInEditMode"),
                         order = 1,
                         func = exitWithSave
                     },
@@ -655,7 +673,7 @@ createActiveCourseGUI = function()
                         confirmText = "Are you sure you want to reset the course completion?",
                         disabled = isCourseCompletionResetDisabled,
                         order = 5,
-                        func = courseResetButtonFn
+                        func = onClickCourseReset
                     }
                 }
             }
@@ -672,7 +690,6 @@ end
 
 local function setActiveCourse(courseId)
     local savedCourse = WorldOfParkour.savedCoursesStore.savedcourses[courseId]
-
     -- We need to make copies here because Lua passes around tables as reference.
     -- We do not want to edit the original table.
     local savedCourseCopy = utils.deepcopy(savedCourse)
@@ -696,10 +713,7 @@ local function setActiveCourse(courseId)
 
     -- Add to GUI
     WorldOfParkour.GUIoptionsStore.options.args.activecourse.args[courseId] = createActiveCourseGUI()
-    -- print(WorldOfParkour.GUIoptionsStore.options.args.activecourse.args[courseId])
     WorldOfParkour:ScheduleTimer(selectActiveCourse, 0, courseId)
-
-    SetCrazyArrowToFirstOrLastPoint("first")
 end
 
 local function onClickSetActiveCourse(info, action)
@@ -734,7 +748,7 @@ end
 
 local function disableRemoveCourse(info)
     local courseId = findCourseIdRecursive(info)
-    return WorldOfParkour:isOfficialCourse(courseId)
+    return WorldOfParkour:IsOfficialCourse(courseId)
 end
 
 local createSavedCourseGUI
@@ -778,25 +792,25 @@ local function enableEditMode(courseId)
     if characterEditingCourse ~= "" then
         local coloredCharacterName = string.format("\124cFFFFF468%s\124r", characterEditingCourse)
         local errMsg = string.format(
-                           "This course is already being edited by '%s', you must exit editing mode on that character to edit this course.",
+                           "This course is already being edited by '%s', you must exit editing mode on those characters to edit this course.",
                            coloredCharacterName)
         WorldOfParkour:Error(errMsg)
     end
     savedCourseMetadata.characterEditingCourse = string.format("%s-%s", UnitFullName("player"))
 
     -- Reset the course completion before editing.
+    WorldOfParkour.activeCourseStore.IsInEditMode = true
     WorldOfParkour:ResetCourseCompletion(WorldOfParkour.activeCourseStore.activecourse, true)
-    WorldOfParkour.activeCourseStore.isInEditMode = true
-    SetCrazyArrowToFirstOrLastPoint("last")
 end
 
 onClickEnableEditMode = function(info)
     local courseId = findCourseIdRecursive(info)
-    if WorldOfParkour:isOfficialCourse(courseId) then
+    if WorldOfParkour:IsOfficialCourse(courseId) then
+        -- If the user wants to edit an official course, the below steps will be done for them.
+
         -- Avoid scheduling any selections of courses because they will just happen out of order.
         -- We only want to select the course once its the active course.
         local scheduleSelectCourse = false
-        -- If the user wants to edit an official course, the below steps will be done for them.
         -- Unset course
         unsetActiveCourse(courseId, scheduleSelectCourse)
         -- Make a copy
@@ -848,7 +862,7 @@ createSavedCourseGUI = function()
                 desc = "Set this course as active to run or edit the course.",
                 type = "execute",
                 width = "full",
-                disabled = utils.bind(WorldOfParkour, "isActiveCourse"),
+                disabled = utils.bind(WorldOfParkour, "IsActiveCourse"),
                 func = onClickSetActiveCourse,
                 order = 13
             },
@@ -869,7 +883,7 @@ createSavedCourseGUI = function()
                 confirmText = "Are you sure you want to delete this course?",
                 type = "execute",
                 disabled = disableRemoveCourse,
-                func = removeCourse,
+                func = onClickRemoveCourse,
                 width = "full",
                 order = 17
             },
@@ -951,7 +965,7 @@ function WorldOfParkour:GenerateOptions()
                     noactive = {
                         name = "No Active Course Selected",
                         type = "group",
-                        hidden = utils.bind(WorldOfParkour, "isActiveCourse"),
+                        hidden = utils.bind(WorldOfParkour, "IsActiveCourse"),
                         disabled = true,
                         args = {}
                     }
@@ -1020,7 +1034,7 @@ function WorldOfParkour:GenerateOptions()
 
     -- Load stored courses.
     for id, _ in pairs(self.savedCoursesStore.savedcourses) do
-        if self.firstLoadStore.officialcourseids[id] then
+        if WorldOfParkour:IsOfficialCourse(id) then
             -- Add to official courses
             options.args.officialcourselist.args[id] = createSavedCourseGUI()
         else
@@ -1028,7 +1042,6 @@ function WorldOfParkour:GenerateOptions()
             options.args.courselist.args[id] = createSavedCourseGUI()
         end
     end
-
     return options
 end
 
@@ -1042,7 +1055,7 @@ function WorldOfParkour:CreateGUI()
     local f = function() AceConfigDialog:Open("WorldOfParkour") end
 
     -- Load last active course
-    if WorldOfParkour:isActiveCourse() then
+    if WorldOfParkour:IsActiveCourse() then
         local lastActiveCourseId = WorldOfParkour.activeCourseStore.activecourse.id
         WorldOfParkour.GUIoptionsStore.options.args.activecourse.args[lastActiveCourseId] =
             createActiveCourseGUI()

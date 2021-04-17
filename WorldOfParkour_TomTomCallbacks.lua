@@ -26,6 +26,20 @@ local function completePoint(uid)
     AceConfigRegistry:NotifyChange("WorldOfParkour")
 end
 
+local function getAllPreviousUncompletedPoints(uid)
+    local previousUncompletedPoints = {}
+
+    local activeCourse = WorldOfParkour.activeCourseStore.activecourse.course
+    for _, v in pairs(activeCourse) do
+        if v.completed == false then
+            table.insert(previousUncompletedPoints, v.uid)
+            -- Break the loop when we hit the current point.
+            if TomTom:GetKey(v.uid) == TomTom:GetKey(uid) then break end
+        end
+    end
+    return previousUncompletedPoints
+end
+
 local dropdown_info = {
     -- Define level one elements here
     [1] = {
@@ -36,17 +50,16 @@ local dropdown_info = {
             -- set as crazy arrow
             text = "Set as waypoint arrow",
             func = function()
-                if WorldOfParkour:isNotInEditMode() then errors.notInEditModeError() end
+                if WorldOfParkour:IsNotInEditMode() then errors.notInEditModeError() end
                 local uid = dropdown.uid
-                local data = uid
-                TomTom:SetCrazyArrow(uid, WorldOfParkour.arrivalDistance, data.title or "TomTom waypoint")
+                TomTom:SetCrazyArrow(uid, WorldOfParkour.arrivalDistance, uid.title or "TomTom waypoint")
             end
         },
         { -- Add previous point, can be used if the user needs to recomplete the previous point for any reason.
             text = "Show previous point",
             func = function()
                 -- Don't clear if we are in edit mode.
-                if WorldOfParkour:isInEditMode() then errors.inEditModeError() end
+                if WorldOfParkour:IsInEditMode() then errors.inEditModeError() end
                 local uid = dropdown.uid
                 local nextUncompletedPoint = WorldOfParkour:GetNextUncompletedPoint()
                 if TomTom:GetKey(uid) ~= TomTom:GetKey(nextUncompletedPoint) then
@@ -55,7 +68,9 @@ local dropdown_info = {
 
                 local idx = utils.getCoursePointIndex(uid)
                 local lastIdx = idx - 1
-                if lastIdx == 0 then WorldOfParkour:Error("You are already at the first point!") end
+                if lastIdx == 0 then
+                    WorldOfParkour:Error("You are already at the first point!")
+                end
                 local activeCourse = WorldOfParkour.activeCourseStore.activecourse.course
                 local lastUid = activeCourse[lastIdx].uid
                 local m, x, y, options = WorldOfParkour:CreateTomTomWaypointArgs(lastUid)
@@ -68,7 +83,7 @@ local dropdown_info = {
         }, { -- Remove waypoint
             text = "Remove waypoint",
             func = function()
-                if WorldOfParkour:isNotInEditMode() then errors.notInEditModeError() end
+                if WorldOfParkour:IsNotInEditMode() then errors.notInEditModeError() end
                 local uid = dropdown.uid
                 WorldOfParkour:RemoveWaypointAndReorder(uid)
                 AceConfigRegistry:NotifyChange("WorldOfParkour")
@@ -80,19 +95,21 @@ local dropdown_info = {
             text = "Complete point",
             func = function()
                 -- Don't clear if we are in edit mode.
-                if WorldOfParkour:isInEditMode() then errors.inEditModeError() end
+                if WorldOfParkour:IsInEditMode() then errors.inEditModeError() end
 
                 local uid = dropdown.uid
-                -- Dont clear if it is not the next waypoint.
-                local nextUncompletedPoint = WorldOfParkour:GetNextUncompletedPoint()
-                if TomTom:GetKey(uid) ~= TomTom:GetKey(nextUncompletedPoint) then
-                    WorldOfParkour:Error("Complete the previous points first.")
-                end
 
-                if TomTom:GetDistanceToWaypoint(uid) > WorldOfParkour.arrivalDistance then
+                -- Make sure user is within clear distance before clearing.
+                if TomTom:GetDistanceToWaypoint(uid) > WorldOfParkour.clearDistance then
                     WorldOfParkour:Error("You need to be closer to complete this point.")
                 end
-                completePoint(uid)
+
+                -- If the user skipped some points, they can stand on whatever point is closest to them
+                -- And complete all previous points.
+                local allPreviousUncompletedPoints = getAllPreviousUncompletedPoints(uid)
+                for _, previousWaypoints in pairs(allPreviousUncompletedPoints) do
+                    completePoint(previousWaypoints)
+                end
             end
         }, { -- Show hint
             text = "Show hint",
@@ -151,7 +168,7 @@ end
 
 local function _both_clear_distance(event, uid, range, distance, lastdistance)
     -- Don't clear if we are in edit mode.
-    if WorldOfParkour:isInEditMode() then return end
+    if WorldOfParkour:IsInEditMode() then return end
     -- Dont clear if it is not the next waypoint.
     local nextUncompletedPoint = WorldOfParkour:GetNextUncompletedPoint()
     if TomTom:GetKey(uid) ~= TomTom:GetKey(nextUncompletedPoint) then return end

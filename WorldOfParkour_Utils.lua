@@ -33,7 +33,9 @@ utils.filter = function(tbl, func)
 end
 
 utils.difference = function(a, b)
-    if #b > #a then WorldOfParkour:Error("You must flip the inputs OR ensure that the table lengths are equal.") end
+    if #b > #a then
+        WorldOfParkour:Error("You must flip the inputs OR ensure that the table lengths are equal.")
+    end
     local aa = {}
     for _, v in pairs(a) do aa[v] = true end
     for _, v in pairs(b) do aa[v] = nil end
@@ -128,8 +130,8 @@ end
 
 utils.mergeTables = function(t1, t2)
     local newTable = {}
-    for k,v in pairs(t1) do newTable[k] = v end
-    for k,v in pairs(t2) do newTable[k] = v end
+    for k, v in pairs(t1) do newTable[k] = v end
+    for k, v in pairs(t2) do newTable[k] = v end
 
     return newTable
 end

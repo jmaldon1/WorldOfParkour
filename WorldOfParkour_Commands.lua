@@ -6,14 +6,14 @@ local errors = addon.errors
 --  Define Slash commands
 -------------------------------------------------------------------]] --
 local function setPointCmd()
-    if WorldOfParkour:isNotActiveCourse() then errors.notInActiveModeError() end
+    if WorldOfParkour:IsNotActiveCourse() then errors.notInActiveModeError() end
     WorldOfParkour:SetPoint()
     -- Notify changes to GUI
     AceConfigRegistry:NotifyChange("WorldOfParkour")
 end
 
 local function setPointAfterCmd(args)
-    if WorldOfParkour:isNotActiveCourse() then errors.notInActiveModeError() end
+    if WorldOfParkour:IsNotActiveCourse() then errors.notInActiveModeError() end
     local afterIdx = WorldOfParkour:GetArgs(args, 1)
     if not afterIdx then WorldOfParkour:Error("setPointAfterCmd(args): Point index is required.") end
 

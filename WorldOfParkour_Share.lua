@@ -1,9 +1,10 @@
 local LibDeflate = LibStub:GetLibrary("LibDeflate")
 local LibSerialize = LibStub("LibSerialize")
+
 local _, addon = ...
 local utils = addon.utils
 
-local function removeCertainKeysFromCourseDetails(courseDetails)
+local function trimCourseDetails(courseDetails)
     local keysToSkip = {compressedcoursedata = true}
     local courseDetailsTrimmed = {}
 
@@ -15,7 +16,7 @@ end
 
 function WorldOfParkour:CompressCourseData(savedCourseDetails)
     -- These are keys we don't want in our compressed data.
-    local savedCourseDetailsTrimmed = removeCertainKeysFromCourseDetails(savedCourseDetails)
+    local savedCourseDetailsTrimmed = trimCourseDetails(savedCourseDetails)
 
     local configForLS = {errorOnUnserializableType = false}
     -- Serialize
@@ -27,7 +28,8 @@ end
 function WorldOfParkour:CreateSharableString(compressedCourseData)
     -- Encode
     local encoded = "!WOP:1!"
-    return encoded .. LibDeflate:EncodeForPrint(compressedCourseData)
+    local printableEncode = LibDeflate:EncodeForPrint(compressedCourseData)
+    return encoded .. printableEncode
 end
 
 local function compareTableTypes(tableA, tableB)
@@ -73,6 +75,7 @@ local function validateDeserializedData(deserializedResults)
 end
 
 function WorldOfParkour:ImportSharableString(sharableCourseString)
+    -- ^(!WOP:\d+!)(\S{15})(.+)$
     local _, _, encodeVersion, encoded = string.find(sharableCourseString, "^(!WOP:%d+!)(.+)$")
     if encodeVersion then
         encodeVersion = tonumber(string.match(encodeVersion, "%d+"))

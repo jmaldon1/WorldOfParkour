@@ -17,7 +17,7 @@
 # external libs
 libs\LibStub\LibStub.lua
 libs\LibDeflate\LibDeflate.lua
-libs\libSerialize\LibSerialize.lua
+libs\LibSerialize\LibSerialize.lua
 libs\AceAddon-3.0\AceAddon-3.0.xml
 libs\AceConsole-3.0\AceConsole-3.0.xml
 libs\AceConfig-3.0\AceConfig-3.0.xml

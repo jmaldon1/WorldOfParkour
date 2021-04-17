@@ -7,10 +7,19 @@ local utils = addon.utils
 local errors = addon.errors
 
 function WorldOfParkour:OnInitialize()
+    self.arrivalDistance = 2
+    self.clearDistance = 3
+    self.courseSearch = ""
+    self.showCourseString = {}
+    self.importCourseString = ""
+    self.github = "https://github.com/jmaldon1/WorldOfParkour"
+    self.githubIssues = "https://github.com/jmaldon1/WorldOfParkour/issues"
+    self.twitch = "https://www.twitch.tv/joshsbad"
+
     self.activeCourseDefaults = {
-        profile = {isInEditMode = false, isActiveCourse = false, activecourse = {}, backupActivecourse = {}}
+        profile = {IsInEditMode = false, IsActiveCourse = false, activecourse = {}, backupActivecourse = {}}
     }
-    self.savedcoursesDefaults = {global = {savedcourses = {}}}
+    self.savedcoursesDefaults = {global = {savedcourses = {}, officialcourseimportstrings = {}, officialcourseids = {}}}
     self.firstLoadDefaults = {global = {officialcoursesfirstload = {}, officialcourseids = {}}}
     self.backupDefaults = {global = {backup = {}}}
 
@@ -32,15 +41,6 @@ function WorldOfParkour:OnInitialize()
     self.GUIoptionsDB = LibStub("AceDB-3.0"):New("WoPGUIDB", self.GUIoptionsDefaults)
     self.GUIoptionsStore = self.GUIoptionsDB.profile
 
-    self.arrivalDistance = 2
-    self.clearDistance = 3
-    self.courseSearch = ""
-    self.showCourseString = {}
-    self.importCourseString = ""
-    self.github = "https://github.com/jmaldon1/WorldOfParkour"
-    self.githubIssues = "https://github.com/jmaldon1/WorldOfParkour/issues"
-    self.twitch = "https://www.twitch.tv/joshsbad"
-
     -- Register when a player is logging out.
     -- https://wow.gamepedia.com/PLAYER_LEAVING_WORLD
     self:RegisterEvent("PLAYER_LEAVING_WORLD", "BackupCourseStrings")
@@ -51,28 +51,16 @@ end
 function WorldOfParkour:OnEnable()
     -- Blizzard Addon interface menu.
     self:CreateConfig()
-
-    -- Load all default courses the first time the addon is opened.
-    -- These will not be added again unless the user resets the addon.
-    for k, courseImportString in pairs(addon.officialCourses) do
-        if self.firstLoadStore.officialcoursesfirstload[k] == nil then
-            local courseId = ImportAndAddToOfficialCoursesGUI(courseImportString)
-            -- Add the official course Ids to a set
-            self.firstLoadStore.officialcourseids[courseId] = true
-            -- Mark down that this course should not be loaded again.
-            self.firstLoadStore.officialcoursesfirstload[k] = true
-        end
-    end
-
+    WorldOfParkour:LoadOfficialCourses()
     -- Reload last active parkour course on load.
-    if self:isActiveCourse() then self:ReloadActiveCourse() end
+    if self:IsActiveCourse() then self:ReloadActiveCourse() end
 end
 
 -- Get the current error handler
 local origHandler = geterrorhandler()
 
 local function OnErrorHandler(msg)
-    -- print(msg)
+    print(msg)
     return origHandler(msg)
 end
 seterrorhandler(OnErrorHandler)
@@ -97,25 +85,47 @@ function WorldOfParkour:Error(msg)
     error(msg)
 end
 
-function WorldOfParkour:isActiveCourse() return self.activeCourseStore.isActiveCourse end
+local function importOfficialCourse(key, courseImportString)
+    local courseId = ImportAndAddToOfficialCoursesGUI(courseImportString)
+    WorldOfParkour.savedCoursesStore.officialcourseimportstrings[key] = {courseString = courseImportString, id = courseId}
+    WorldOfParkour.savedCoursesStore.officialcourseids[courseId] = true
+end
 
-function WorldOfParkour:isNotActiveCourse() return not self:isActiveCourse() end
-
-function WorldOfParkour:isInEditMode() return self.activeCourseStore.isInEditMode end
-
-function WorldOfParkour:isNotInEditMode() return not self:isInEditMode() end
-
-function WorldOfParkour:isOfficialCourse(courseId)
-    if self.firstLoadStore.officialcourseids[courseId] then
-        return true
+function WorldOfParkour:LoadOfficialCourses()
+    for k, courseImportString in pairs(addon.officialCourses) do
+        if self.savedCoursesStore.officialcourseimportstrings[k] == nil then
+            -- First time we are seeing this official course, add it.
+            importOfficialCourse(k, courseImportString)
+        elseif self.savedCoursesStore.officialcourseimportstrings[k].courseString ~= courseImportString then
+            -- The official course has changed.
+            -- Delete the old official course.
+            local oldOfficialCourseId = self.savedCoursesStore.officialcourseimportstrings[k].id
+            local forceUnsetActiveCourse = true
+            WorldOfParkour:RemoveCourse(oldOfficialCourseId, forceUnsetActiveCourse)
+            WorldOfParkour.savedCoursesStore.officialcourseids[oldOfficialCourseId] = nil
+            -- Add the updated course.
+            importOfficialCourse(k, courseImportString)
+        end
     end
+end
+
+function WorldOfParkour:IsActiveCourse() return self.activeCourseStore.IsActiveCourse end
+
+function WorldOfParkour:IsNotActiveCourse() return not self:IsActiveCourse() end
+
+function WorldOfParkour:IsInEditMode() return self.activeCourseStore.IsInEditMode end
+
+function WorldOfParkour:IsNotInEditMode() return not self:IsInEditMode() end
+
+function WorldOfParkour:IsOfficialCourse(courseId)
+    if self.savedCoursesStore.officialcourseids[courseId] then return true end
     return false
 end
 
 function WorldOfParkour:SyncWithTomTomDB()
     -- This will remove any points that exist in our store but not TomTom's,
     -- thus syncing us with TomTom.
-    if self:isNotActiveCourse() then errors.notInActiveModeError() end
+    if self:IsNotActiveCourse() then errors.notInActiveModeError() end
 
     local newActiveCourse = {}
     for _, coursePoint in ipairs(self.activeCourseStore.activecourse.course) do
@@ -135,7 +145,7 @@ function WorldOfParkour:SyncWithTomTomDB()
 end
 
 function WorldOfParkour:IsSyncedWithTomTomDB()
-    if self:isNotActiveCourse() then errors.notInActiveModeError() end
+    if self:IsNotActiveCourse() then errors.notInActiveModeError() end
 
     if #self.activeCourseStore.activecourse.course == 0 then
         -- If there are 0 points in the our course, it is not possible to determine
@@ -168,7 +178,7 @@ function WorldOfParkour:ResetCourseCompletion(courseDetails, isActiveCourse)
     courseDetails.metadata.isComplete = false
     for _, coursePoint in pairs(courseDetails.course) do coursePoint.completed = false end
 
-    if isActiveCourse then self:ReloadActiveCourse() end
+    if self:IsActiveCourse() then self:ReloadActiveCourse() end
 end
 
 function WorldOfParkour:GetCourseCompletion(course)
@@ -215,8 +225,8 @@ function WorldOfParkour:BackupCourseStrings()
 end
 
 function WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
-    if self:isNotActiveCourse() then errors.notInActiveModeError() end
-    if self:isNotInEditMode() then errors.notInEditModeError() end
+    if self:IsNotActiveCourse() then errors.notInActiveModeError() end
+    if self:IsNotInEditMode() then errors.notInEditModeError() end
     if #self.activeCourseStore.activecourse.course >= 1000 then
         -- Hard limit on course points, just in case.
         WorldOfParkour:Error("Max point limit reached.")
@@ -289,8 +299,8 @@ function WorldOfParkour:RemoveWaypointAndReorder(uid)
 end
 
 function WorldOfParkour:RemoveWaypoint(uid)
-    if self:isNotActiveCourse() then errors.notInActiveModeError() end
-    if self:isNotInEditMode() then errors.notInEditModeError() end
+    if self:IsNotActiveCourse() then errors.notInActiveModeError() end
+    if self:IsNotInEditMode() then errors.notInEditModeError() end
 
     local idx = utils.getCoursePointIndex(uid)
     table.remove(self.activeCourseStore.activecourse.course, idx)
@@ -336,6 +346,7 @@ function WorldOfParkour:CreateWaypointDetails(idx)
         callbacks = self:CreateTomTomCallbacks(),
         minimap_icon_size = 10,
         worldmap_icon_size = 10,
+        -- crazy = false,
         arrivaldistance = self.arrivalDistance
     }
     return {mapID, x, y, opts}
@@ -360,19 +371,18 @@ function WorldOfParkour:CreateTomTomWaypointArgs(uid)
 end
 
 function WorldOfParkour:ReloadActiveCourse()
-    if self:isNotActiveCourse() then errors.notInActiveModeError() end
+    if self:IsNotActiveCourse() then errors.notInActiveModeError() end
     -- Recover our last active parkour course.
     -- We need to recreate our active course store
     -- because the recovered uid's are now invalid.
-    local updatedActiveCourseStore = {}
-
-    -- self:Printf("num points: %s", #self.activeCourseStore.activecourse.course)
+    local updatedActiveCourse = {}
+    -- Start clean with TomTom before reloading.
+    self:RemoveAllTomTomWaypoints()
 
     -- Recreate the TomTom waypoints with our callbacks
     for _, coursePoint in pairs(self.activeCourseStore.activecourse.course) do
         local uid = coursePoint.uid
         local m, x, y, options = self:CreateTomTomWaypointArgs(uid)
-        print(options.callbacks.distance[3])
 
         local isSuccess, results = pcall(utils.bind(TomTom, "AddWaypoint"), m, x, y, options)
         if not isSuccess then WorldOfParkour:Error("This course is invalid, please delete it.") end
@@ -392,11 +402,11 @@ function WorldOfParkour:ReloadActiveCourse()
             end
         end
 
-        table.insert(updatedActiveCourseStore, updatedCoursePoint)
+        table.insert(updatedActiveCourse, updatedCoursePoint)
     end
 
-    self.activeCourseStore.activecourse.course = updatedActiveCourseStore
-    if self:isInEditMode() then
+    self.activeCourseStore.activecourse.course = updatedActiveCourse
+    if self:IsInEditMode() then
         SetCrazyArrowToFirstOrLastPoint("last")
     else
         local nextUncompletedUid = self:GetNextUncompletedPoint()
@@ -449,7 +459,7 @@ function WorldOfParkour:NewCourseDefaults()
 end
 
 function WorldOfParkour:RemoveAllTomTomWaypoints()
-    if self:isNotActiveCourse() then errors.notInActiveModeError() end
+    if self:IsNotActiveCourse() then errors.notInActiveModeError() end
     if #self.activeCourseStore.activecourse.course == 0 then return end
     -- NOTE: This will ONLY remove WorldOfParkour TomTom waypoints.
     for _, coursePoint in pairs(self.activeCourseStore.activecourse.course) do
@@ -459,7 +469,7 @@ function WorldOfParkour:RemoveAllTomTomWaypoints()
 end
 
 -- function WorldOfParkour:ResetMemory()
---     if self:isActiveCourse() then self:RemoveAllTomTomWaypoints() end
+--     if self:IsActiveCourse() then self:RemoveAllTomTomWaypoints() end
 --     self.activeCourseStore.activecourse.course = {}
 --     self.activeCourseDB:ResetProfile()
 --     self.activeCourseDB:ResetDB()
