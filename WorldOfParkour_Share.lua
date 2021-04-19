@@ -60,7 +60,7 @@ local function validateDeserializedData(deserializedResults)
     end
     -- Check if the course keys are correct.
     local newCourseDetails = WorldOfParkour:NewCourseDefaults()
-    local newCourseDetailsTrimmed = removeCertainKeysFromCourseDetails(newCourseDetails)
+    local newCourseDetailsTrimmed = trimCourseDetails(newCourseDetails)
     compareTableTypes(deserializedResults, newCourseDetailsTrimmed)
 
     -- Check if the point keys are correct.
