@@ -19,7 +19,7 @@ function WorldOfParkour:OnInitialize()
     self.activeCourseDefaults = {
         profile = {IsInEditMode = false, IsActiveCourse = false, activecourse = {}, backupActivecourse = {}}
     }
-    self.savedcoursesDefaults = {global = {savedcourses = {}, officialcourseimportstrings = {}, officialcourseids = {}}}
+    self.savedcoursesDefaults = {global = {savedcourses = {}, officialcoursehashes = {}, officialcourseids = {}}}
     self.firstLoadDefaults = {global = {officialcoursesfirstload = {}, officialcourseids = {}}}
     self.backupDefaults = {global = {backup = {}}}
 
@@ -60,7 +60,7 @@ end
 local origHandler = geterrorhandler()
 
 local function OnErrorHandler(msg)
-    -- print(msg)
+    print(msg)
     return origHandler(msg)
 end
 seterrorhandler(OnErrorHandler)
@@ -86,23 +86,24 @@ function WorldOfParkour:Error(msg)
 end
 
 local function importOfficialCourse(key, courseImportString)
-    local courseId = ImportAndAddToOfficialCoursesGUI(courseImportString)
-    WorldOfParkour.savedCoursesStore.officialcourseimportstrings[key] = {courseString = courseImportString, id = courseId}
+    local courseId, hash = ImportAndAddToOfficialCoursesGUI(courseImportString)
+    WorldOfParkour.savedCoursesStore.officialcoursehashes[key] = {hash = hash, id = courseId}
     WorldOfParkour.savedCoursesStore.officialcourseids[courseId] = true
 end
 
 function WorldOfParkour:LoadOfficialCourses()
     for k, courseImportString in pairs(addon.officialCourses) do
-        if self.savedCoursesStore.officialcourseimportstrings[k] == nil then
+        local onlyParseHash = true
+        local _, hash, _ = WorldOfParkour:ParseSharableString(courseImportString, onlyParseHash)
+        if self.savedCoursesStore.officialcoursehashes[k] == nil then
             -- First time we are seeing this official course, add it.
             importOfficialCourse(k, courseImportString)
-        elseif self.savedCoursesStore.officialcourseimportstrings[k].courseString ~= courseImportString then
-            -- The official course has changed.
+        elseif self.savedCoursesStore.officialcoursehashes[k].hash ~= hash then
+            -- The official course has updated.
             -- Delete the old official course.
-            local oldOfficialCourseId = self.savedCoursesStore.officialcourseimportstrings[k].id
+            local oldOfficialCourseId = self.savedCoursesStore.officialcoursehashes[k].id
             local forceUnsetActiveCourse = true
             WorldOfParkour:RemoveCourse(oldOfficialCourseId, forceUnsetActiveCourse)
-            WorldOfParkour.savedCoursesStore.officialcourseids[oldOfficialCourseId] = nil
             -- Add the updated course.
             importOfficialCourse(k, courseImportString)
         end

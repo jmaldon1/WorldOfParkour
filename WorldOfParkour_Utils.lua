@@ -135,3 +135,24 @@ utils.mergeTables = function(t1, t2)
 
     return newTable
 end
+
+utils.decimalToHex = function(num)
+    -- Unfortunately we get overflow errors when trying to convert large integers to
+    -- hex when just using string.format("0x%08X", large_integer). So we had to create this function
+    -- To convert integers to hex.
+    -- source: https://stackoverflow.com/a/66819728/9506134
+    if num == 0 then
+        return '0'
+    end
+    if num < 0 then
+        WorldOfParkour:Error("decimalToHex: Got a negative number? Report this bug.")
+    end
+    local hexstr = "0123456789ABCDEF"
+    local result = ""
+    while num > 0 do
+        local n = num % 16
+        result = string.sub(hexstr, n + 1, n + 1) .. result
+        num = math.floor(num / 16)
+    end
+    return result
+end

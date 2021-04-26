@@ -25,11 +25,18 @@ function WorldOfParkour:CompressCourseData(savedCourseDetails)
     return LibDeflate:CompressDeflate(serializedCourse)
 end
 
+local function createCourseStringHash(printableEncode)
+    local hashInteger = LibDeflate:Adler32(printableEncode)
+    local hashHex = utils.decimalToHex(hashInteger)
+    return string.format("0x%08s", hashHex)
+end
+
 function WorldOfParkour:CreateSharableString(compressedCourseData)
     -- Encode
-    local encoded = "!WOP:1!"
+    local encoded = "!WOP:2!"
     local printableEncode = LibDeflate:EncodeForPrint(compressedCourseData)
-    return encoded .. printableEncode
+    local hash = createCourseStringHash(printableEncode) .. "!"
+    return encoded .. hash .. printableEncode
 end
 
 local function compareTableTypes(tableA, tableB)
@@ -47,7 +54,7 @@ local function compareTableTypes(tableA, tableB)
 
     for k, _ in pairs(tableB) do
         if tableA[k] == nil then
-            -- Missing field.
+            -- Missing field. 
             WorldOfParkour:Error(errMsg .. "missing field.")
         end
     end
@@ -74,15 +81,45 @@ local function validateDeserializedData(deserializedResults)
     return deserializedResults
 end
 
-function WorldOfParkour:ImportSharableString(sharableCourseString)
-    -- ^(!WOP:\d+!)(\S{15})(.+)$
-    local _, _, encodeVersion, encoded = string.find(sharableCourseString, "^(!WOP:%d+!)(.+)$")
-    if encodeVersion then
-        encodeVersion = tonumber(string.match(encodeVersion, "%d+"))
+function WorldOfParkour:ParseSharableString(sharableCourseString, _hashOnly)
+    -- Returns version, hash, and encoded string
+    -- Or an error if there was an issue.
+    -- NOTE: Lua doesn't use regex, it uses Patterns (https://www.lua.org/manual/5.1/manual.html#5.4.1)
+    local hashOnly = _hashOnly or false  -- Only parse the hash, O(1) operation
+
+    local versionGroupPattern = "(!WOP:%d+!)"
+    local hashGroupPattern = "(0x%x+!)"
+    local encodedGroupPattern = "(.+)"
+
+    local versionPattern = string.format("^%s", versionGroupPattern)
+    local hashPattern = string.format("^%s%s", versionGroupPattern, hashGroupPattern)
+    local encodedV1Pattern = string.format("^%s%s$", versionGroupPattern, encodedGroupPattern)
+    local encodedPattern = string.format("^%s%s%s$", versionGroupPattern, hashGroupPattern, encodedGroupPattern)
+
+    local _, _, encodeVersionRaw = string.find(sharableCourseString, versionPattern)
+    if encodeVersionRaw then
+        local encodeVersion = tonumber(string.match(encodeVersionRaw, "%d+"))
+        if encodeVersion == 1 then
+            if hashOnly then
+                WorldOfParkour:Error("ParseSharableString: the `hashOnly` argument only works with course strings v2+.")
+            end
+            local _, _, _, encodedV1 = string.find(sharableCourseString, encodedV1Pattern)
+            return encodeVersion, createCourseStringHash(encodedV1), encodedV1
+        elseif encodeVersion > 1 then
+            if hashOnly then
+                local _, _, _, hash = string.find(sharableCourseString, hashPattern)
+                return encodeVersion, hash, nil
+            end
+            local _, _, _, hash, encoded = string.find(sharableCourseString, encodedPattern)
+            return encodeVersion, hash, encoded
+        end
     else
         WorldOfParkour:Error("ImportSharableString: Bad import string.")
     end
+end
 
+function WorldOfParkour:ImportSharableString(sharableCourseString)
+    local _, hash, encoded = self:ParseSharableString(sharableCourseString)
     -- Decode
     local compress_deflate = LibDeflate:DecodeForPrint(encoded)
     -- Decompress
@@ -109,5 +146,5 @@ function WorldOfParkour:ImportSharableString(sharableCourseString)
 
     -- Add to saved courses.
     WorldOfParkour:InsertToSavedCourses(newSavedCourse)
-    return newSavedCourse.id
+    return newSavedCourse.id, hash
 end

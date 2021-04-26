@@ -217,6 +217,7 @@ function WorldOfParkour:RemoveCourse(courseId, _forceUnsetActiveCourse)
     self.savedCoursesStore.savedcourses[courseId] = nil
     if self:IsOfficialCourse(courseId) then
         self.GUIoptionsStore.options.args.officialcourselist.args[courseId] = nil
+        self.savedCoursesStore.officialcourseids[courseId] = nil
     else
         self.GUIoptionsStore.options.args.courselist.args[courseId] = nil
     end
@@ -923,24 +924,24 @@ local function addNewCourse()
 end
 
 function ImportAndAddToYourCoursesGUI(courseString)
-    local courseId = WorldOfParkour:ImportSharableString(courseString)
+    local courseId, hash = WorldOfParkour:ImportSharableString(courseString)
     -- Add course to GUI
     WorldOfParkour.GUIoptionsStore.options.args.courselist.args[courseId] = createSavedCourseGUI()
-    return courseId
+    return courseId, hash
 end
 
 function ImportAndAddToOfficialCoursesGUI(courseString)
-    local courseId = WorldOfParkour:ImportSharableString(courseString)
+    local courseId, hash = WorldOfParkour:ImportSharableString(courseString)
     -- Add course to GUI
     WorldOfParkour.GUIoptionsStore.options.args.officialcourselist.args[courseId] = createSavedCourseGUI()
-    return courseId
+    return courseId, hash
 end
 
 local function getImportCourseString() return WorldOfParkour.importCourseString end
 
 local function setImportCourseString(info, courseString)
     WorldOfParkour.importCourseString = courseString
-    local courseId = ImportAndAddToYourCoursesGUI(courseString)
+    local courseId, _ = ImportAndAddToYourCoursesGUI(courseString)
     -- Select the imported course once its been created.
     WorldOfParkour:ScheduleTimer(selectCourse, 0, courseId)
 end
