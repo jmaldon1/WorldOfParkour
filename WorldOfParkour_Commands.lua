@@ -35,11 +35,10 @@ function WorldOfParkour:SetPoint(idx)
     WorldOfParkour:SetWaypointAtIndexOnCurrentPosition(idx)
 
     -- Add point to GUI
-    local uuidPattern = "%w+-%w+-4%w+-%w+-%w+"
     local activeCourseGUI = WorldOfParkour.GUIoptionsStore.options.args.activecourse.args
     for id, _ in pairs(activeCourseGUI) do
         -- Find the active course, there will only be 1.
-        if string.match(id, uuidPattern) then ReloadPointsToGUI(id) end
+        if string.match(id, self.uuidPattern) then ReloadPointsToGUI(id) end
     end
 end
 

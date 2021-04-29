@@ -12,8 +12,7 @@ local function findCourseIdRecursive(info, level)
     level = level or 0
     local levelName = info[#info - level]
     if not levelName then WorldOfParkour:Error("Couldn't find ID") end
-    local uuidPattern = "%w+-%w+-4%w+-%w+-%w+"
-    if string.match(levelName, uuidPattern) then return levelName end
+    if string.match(levelName, WorldOfParkour.uuidPattern) then return levelName end
     return findCourseIdRecursive(info, level + 1)
 end
 
@@ -273,14 +272,13 @@ local function displayMatchingCourses(courseStartsWith)
     -- This is a simple search, it will just find courses that begin with
     -- the characters the user has typed into the input box.
     -- Hide courses that do not match the search criteria
-    local uuidPattern = "%w+-%w+-4%w+-%w+-%w+"
     local courseList = WorldOfParkour.GUIoptionsStore.options.args.courselist.args
     local officialCourseList = WorldOfParkour.GUIoptionsStore.options.args.officialcourselist.args
     local allCourses = utils.mergeTables(courseList, officialCourseList)
 
     for id, v in pairs(allCourses) do
         -- Only check courses (We know its a course by the pattern of their table key)
-        if string.match(id, uuidPattern) then
+        if string.match(id, WorldOfParkour.uuidPattern) then
             local savedCourses = WorldOfParkour.savedCoursesStore.savedcourses
             local courseName = savedCourses[id].title
             local lowerCourseName = string.lower(courseName)

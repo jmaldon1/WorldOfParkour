@@ -10,6 +10,7 @@ function WorldOfParkour:OnInitialize()
     self.arrivalDistance = 2
     self.clearDistance = 3
     self.courseSearch = ""
+    self.uuidPattern = "%w+-%w+-4%w+-%w+-%w+"
     self.showCourseString = {}
     self.importCourseString = ""
     self.github = "https://github.com/jmaldon1/WorldOfParkour"
@@ -291,11 +292,10 @@ function WorldOfParkour:RemoveWaypointAndReorder(uid)
     end
 
     -- -- Add point to GUI
-    local uuidPattern = "%w+-%w+-4%w+-%w+-%w+"
     local activeCourseGUI = WorldOfParkour.GUIoptionsStore.options.args.activecourse.args
     for k, _ in pairs(activeCourseGUI) do
         -- Find the active course, there will only be 1.
-        if string.match(k, uuidPattern) then ReloadPointsToGUI(k) end
+        if string.match(k, self.uuidPattern) then ReloadPointsToGUI(k) end
     end
 end
 
