@@ -51,3 +51,4 @@ official_courses\WorldOfParkour_Ironforge_Mountain_Climbing.lua
 official_courses\WorldOfParkour_Silvermoon_Views.lua
 official_courses\WorldOfParkour_King_of_Zul_Aman.lua
 official_courses\WorldOfParkour_Mission_Steal_Lalathin.lua
+official_courses\WorldOfParkour_Scaling_Highmountain.lua
