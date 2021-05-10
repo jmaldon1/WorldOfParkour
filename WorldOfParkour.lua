@@ -61,7 +61,7 @@ end
 local origHandler = geterrorhandler()
 
 local function OnErrorHandler(msg)
-    print(msg)
+    -- print(msg)
     return origHandler(msg)
 end
 seterrorhandler(OnErrorHandler)
