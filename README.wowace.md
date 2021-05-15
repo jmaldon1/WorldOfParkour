@@ -12,8 +12,8 @@ World of Warcraft addon: Parkour puzzles throughout the world.
 
 # Known Issues
 
-* **DO NOT right-click the Crazy Waypoint Arrow that TomTom provides and use any of those options.** It can easily bug out your course run or creation.
-* TomTom seems to not always want to clear points even when you are standing on them. So if this occurs, just right click the point on the minimap and press `Complete point` to manually complete it.
+1. **DO NOT right-click the Crazy Waypoint Arrow that TomTom provides and use any of those options.** It can easily bug out your course run or creation.
+2. TomTom seems to not always want to clear points even when you are standing on them. So if this occurs, just right click the point on the minimap and press `Complete point` to manually complete it.
 
 
 # Quick Start
@@ -22,10 +22,11 @@ To open WorldOfParkour, type `/wop` or `/parkour` into your chat and hit enter.
 
 # How to Run a Course
 
-Simply pick a course from either the `Your Courses` tab or the `Official Courses` tab and set it as the `Active Course`.
+Simply pick a course from the `All Courses` tab and set it as the `Active Course`.
+
 # Course Creation
 
-## GIF
+## GIF instructions
 
 ![course creation](https://github.com/jmaldon1/WorldOfParkour/raw/3bb51544f7315abac3b89cf8d6c710d0a95aac4f/docs/media/course_creation.gif "Course Creation")
 
@@ -40,20 +41,19 @@ Simply pick a course from either the `Your Courses` tab or the `Official Courses
 7. Add `hints` to your points if you'd like.
 8. Use the [Tips & Tricks](#tips--tricks) section to see some ways to make adding points super simple during your parkour runs.
 
-
 # Course Sharing
 
 ## Sharing a Course
 
 Press the `Show sharable course string` toggle. Copy and paste the string to your friends.
 
-![course share](https://media.forgecdn.net/attachments/342/596/show_course_share.png "Course Share")
+![course share](https://media.forgecdn.net/attachments/363/718/export.png "Course Share")
 
 ## Importing a Course
 
-Press the `Your Courses` tab and paste the course string into the `Import course` input box.
+Press the `All Courses` tab and paste the course string into the `Import course` input box.
 
-![course import](https://media.forgecdn.net/attachments/342/595/import_course_share.png "Course Import")
+![course import](https://media.forgecdn.net/attachments/363/719/import.png "Course Import")
 
 
 # Commands
@@ -68,8 +68,8 @@ Press the `Your Courses` tab and paste the course string into the `Import course
     Points: [1, 2, 3, 4, 5]
     /wopsetpoint
     Points: [1, 2, 3, 4, 5, 6]
-                            ^
-                            This is the new point.
+                                     ^
+                                     6 is the new point.
    ```
 
 3. `/wopsetpointafter`: Set a point after another existing point in the course. Equivalent to pressing `Add point after` or `Add point to beginning` in the UI. 
@@ -85,16 +85,13 @@ Press the `Your Courses` tab and paste the course string into the `Import course
     /wopsetpointafter 2
     Points: [1, 2, 3, 4, 5, 6]
                    ^
-                   This is the new point.
+                   3 is the new point.
     ```
 
 # Tips & Tricks
 
-* Create a macro with `/wopsetpoint` and add it to your action bar to quickly add points to a course without opening the WorldOfParkour UI.
-  * _(NOTE: You need to be editing the course for `/wopsetpoint` to work.)_.
-* Hints for each point can be seen by right clicking the minimap point icon and clicking `Show hint`.
-* **Good practice:** Say the starting location of the course in the description.
-  * Why? If the user is in a different world than the first waypoint, the user will not see a waypoint arrow appear on their screen.
+1. Create a macro with `/wopsetpoint` and add it to your action bar to quickly add points to a course without opening the WorldOfParkour UI _(NOTE: You need to be editing the course for `/wopsetpoint` to work.)_.
+2. Hints for each point can be seen by right clicking the minimap point icon and clicking `Show hint`.
    
 # Useful links
 

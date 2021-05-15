@@ -24,7 +24,7 @@ Simply pick a course from either the `Your Courses` tab or the `Official Courses
 
 # Course Creation
 
-## GIF
+## GIF instructions
 
 ![course creation](https://github.com/jmaldon1/WorldOfParkour/raw/main/docs/media/course_creation.gif "Course Creation")
 
@@ -66,7 +66,7 @@ Press the `Your Courses` tab and paste the course string into the `Import course
     /wopsetpoint
     Points: [1, 2, 3, 4, 5, 6]
                             ^
-                            This is the new point.
+                            6 is the new point.
    ```
 
 3. `/wopsetpointafter`: Set a point after another existing point in the course. Equivalent to pressing `Add point after` or `Add point to beginning` in the UI. 
@@ -79,7 +79,7 @@ Press the `Your Courses` tab and paste the course string into the `Import course
     /wopsetpointafter 2
     Points: [1, 2, 3, 4, 5, 6]
                    ^
-                   This is the new point.
+                   3 is the new point.
     ```
 
 # Tips & Tricks
