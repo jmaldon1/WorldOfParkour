@@ -1,6 +1,11 @@
 name: Build and Upload
 
-on: [push, pull_request]
+# on: [push, pull_request]
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
   release:
@@ -10,7 +15,6 @@ jobs:
       GITHUB_OAUTH: ${{ secrets.GH_TOKEN }}
       WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
       WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
 
     steps:
       - name: Clone project
