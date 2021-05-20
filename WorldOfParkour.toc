@@ -53,3 +53,4 @@ official_courses\WorldOfParkour_Scaling_Highmountain.lua
 official_courses\WorldOfParkour_Nashals_Axe.lua
 official_courses\WorldOfParkour_QuelDanas_Scaffolding.lua
 official_courses\WorldOfParkour_ZulNazman.lua
+official_courses\WorldOfParkour_Felship_Conquerer.lua
