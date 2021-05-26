@@ -1,6 +1,6 @@
 local _, addon = ...;
 
--- https://onlinetexttools.com/split-text
+-- https://onlinetexttools.com/split-text?input=&split-by-char=false&char=%20&split-by-regex=false&regex=%2F%5Cs%2B%2F&split-by-length=true&length=110&separator=%2C%5Cn&symbol-before-chunk=%22&symbol-after-chunk=%22
 table.insert(addon.officialCourses, table.concat({
     "!WOP:2!0x96DD5638!1r1VVXrruyLymXSoHyhjBKIOyuefbe3zF2NxFNBISnwYwaHiNdfHsrU5M5T7(KNDNHzM1Nox6w6Cb1i3sdkvud)dmcjA",
     "rr0Ngen0XB27meHWDJM389EF)4T7n(2rcDT1bFu6fcDPrbEqwSrnk)X5w8pV9Hp63u)0pl)Hrh(Ox9RlB(UB8n)b3AXt5kj688kbm)fcUsnIlo",
