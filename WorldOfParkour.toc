@@ -54,3 +54,4 @@ official_courses\WorldOfParkour_QuelDanas_Scaffolding.lua
 official_courses\WorldOfParkour_ZulNazman.lua
 official_courses\WorldOfParkour_Felship_Conquerer.lua
 official_courses\WorldOfParkour_Kypari_Ik_Treehouse.lua
+official_courses\WorldOfParkour_Ahn_Qiraj_Platforming.lua
